@@ -57,7 +57,9 @@ test.describe("对账工作台（业务模式）", () => {
     await selectPair(page, RP_PAIR_LABEL);
     await page.getByRole("link", { name: "执行记录", exact: true }).click();
     await expect(page.getByRole("heading", { name: "执行记录" })).toBeVisible();
-    await expect(page.getByText("再保送收付↔收付账单").first()).toBeVisible();
+    await expect(
+      page.getByRole("row").filter({ hasText: "再保送收付↔收付账单" }).first()
+    ).toBeVisible();
   });
 
   test("执行结果展示指标汇总", async ({ page }) => {
