@@ -30,7 +30,6 @@ import {
 import {
   addMetricToComparison,
   allMetricCodes,
-  clonePackConfig,
   countMetrics,
   datasetRefLabel,
   diffMetricChanges,

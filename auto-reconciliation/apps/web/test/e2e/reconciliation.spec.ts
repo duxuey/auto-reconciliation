@@ -141,7 +141,9 @@ test.describe("高级设置", () => {
     await page.goto("/packs");
     await expect(page).toHaveURL(/\/advanced\/packs/);
     await expect(page.getByRole("heading", { name: "指标管理" })).toBeVisible();
-    await expect(page.getByText("系统间")).toBeVisible();
+    await expect(
+      page.getByText(/按系统间对账关系查看指标包与指标明细/)
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "+ 新增指标" }).first()).toBeVisible();
   });
 
