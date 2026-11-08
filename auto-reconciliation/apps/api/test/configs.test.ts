@@ -25,6 +25,24 @@ describe("种子指标包配置", () => {
     }
   });
 
+  it("指标 sql 口径随配置解析保留", () => {
+    const pack = PACK_SEEDS[0];
+    expect(pack).toBeDefined();
+    if (pack === undefined) {
+      return;
+    }
+    const config = JSON.parse(JSON.stringify(pack.config)) as typeof pack.config;
+    const metric = config.comparisons[0]?.metrics[0];
+    expect(metric).toBeDefined();
+    if (metric === undefined) {
+      return;
+    }
+    metric.sql = "SELECT 1";
+
+    const parsed = parsePackConfig(config);
+    expect(parsed.comparisons[0]?.metrics[0]?.sql).toBe("SELECT 1");
+  });
+
   it("指标包引用的数据集均已定义", () => {
     const codes = new Set(DATASET_SEEDS.map((dataset) => dataset.datasetCode));
     for (const pack of PACK_SEEDS) {

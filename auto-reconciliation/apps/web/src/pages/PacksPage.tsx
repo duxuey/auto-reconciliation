@@ -1,3 +1,4 @@
+import { METRIC_SQL_MAX_LENGTH } from "@infra/biz-reconciliation-engine";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { QueryState } from "../components/QueryState";
@@ -16,6 +17,7 @@ import { EmptyState } from "../components/ui/empty-state";
 import { Field, Input } from "../components/ui/input";
 import { SelectMenu } from "../components/ui/select-menu";
 import { EmptyRow, Table, Td, Th } from "../components/ui/table";
+import { Textarea } from "../components/ui/textarea";
 import { useToast } from "../components/ui/toast";
 import { cn } from "../lib/cn";
 import { friendlyError } from "../lib/errors";
@@ -36,6 +38,8 @@ import {
   nextMetricCode,
   readPackConfig,
   removeMetricFromComparison,
+  updateMetricSql,
+  type MetricChanges,
   type PackComparisonConfig,
   type PackConfig,
   type PackMetricConfig
@@ -159,11 +163,13 @@ function RuleSummary({ comparison }: { comparison: PackComparisonConfig }) {
 function ComparisonSection({
   comparison,
   onAdd,
-  onRemove
+  onRemove,
+  onEditSql
 }: {
   comparison: PackComparisonConfig;
   onAdd: () => void;
   onRemove: (metricIndex: number) => void;
+  onEditSql: (metricIndex: number) => void;
 }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white">
@@ -207,12 +213,13 @@ function ComparisonSection({
             <Th className="w-28">类型</Th>
             <Th>字段 / 参数</Th>
             <Th className="w-36">容差</Th>
+            <Th className="w-28">SQL 口径</Th>
             <Th className="w-20">操作</Th>
           </tr>
         </thead>
         <tbody>
           {comparison.metrics.length === 0 ? (
-            <EmptyRow colSpan={6}>该比对暂无指标</EmptyRow>
+            <EmptyRow colSpan={7}>该比对暂无指标</EmptyRow>
           ) : (
             comparison.metrics.map((metric, index) => (
               <tr key={`${metric.code}-${index}`} className="hover:bg-slate-50">
@@ -226,6 +233,25 @@ function ComparisonSection({
                 <Td className="text-xs text-slate-500">{metricParams(metric)}</Td>
                 <Td className="text-xs tabular-nums text-slate-500">
                   {formatTolerance(metric)}
+                </Td>
+                <Td>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-7 px-2 text-xs",
+                      typeof metric.sql === "string" && metric.sql.trim() !== ""
+                        ? "text-blue-600 hover:bg-blue-50"
+                        : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                    )}
+                    aria-label={`编辑指标 ${metric.code} 的 SQL 口径`}
+                    title="仅作文档/审计说明，不参与执行"
+                    onClick={() => onEditSql(index)}
+                  >
+                    {typeof metric.sql === "string" && metric.sql.trim() !== ""
+                      ? "查看/编辑"
+                      : "未填写"}
+                  </Button>
                 </Td>
                 <Td>
                   <Button
@@ -294,6 +320,7 @@ function AddMetricDialog({
   const [allowed, setAllowed] = useState("");
   const [maxDistinct, setMaxDistinct] = useState("10");
   const [rateField, setRateField] = useState("");
+  const [sql, setSql] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -312,6 +339,7 @@ function AddMetricDialog({
     setAllowed("");
     setMaxDistinct("10");
     setRateField("");
+    setSql("");
     setError(null);
   }, [open, suggestedCode]);
 
@@ -366,6 +394,10 @@ function AddMetricDialog({
       setError("相对容差必须是最多 4 位小数的数字。");
       return;
     }
+    if (sql.length > METRIC_SQL_MAX_LENGTH) {
+      setError(`SQL 口径最多 ${METRIC_SQL_MAX_LENGTH} 个字符。`);
+      return;
+    }
 
     const metric: PackMetricConfig = {
       code: trimmedCode,
@@ -394,6 +426,9 @@ function AddMetricDialog({
               field: anomalyField.trim(),
               maxDistinct: Number(maxDistinct)
             };
+    }
+    if (sql.trim() !== "") {
+      metric.sql = sql;
     }
     onAdd(metric);
   }
@@ -531,6 +566,23 @@ function AddMetricDialog({
               )}
             </div>
           ) : null}
+
+          <div className="sm:col-span-2">
+            <Field
+              label="SQL 口径（可选，仅作文档/审计）"
+              hint="系统不会执行该 SQL；留空则不记录。"
+            >
+              <Textarea
+                rows={5}
+                value={sql}
+                onChange={(event) => setSql(event.target.value)}
+                maxLength={METRIC_SQL_MAX_LENGTH}
+                spellCheck={false}
+                placeholder="SELECT ..."
+                className="font-mono text-xs"
+              />
+            </Field>
+          </div>
         </div>
 
         {error === null ? null : (
@@ -550,6 +602,104 @@ function AddMetricDialog({
   );
 }
 
+function describeMetricChanges(changes: MetricChanges | null): string {
+  if (changes === null) {
+    return "无指标差异";
+  }
+  const parts: string[] = [];
+  if (changes.added > 0) {
+    parts.push(`新增 ${changes.added} 个指标`);
+  }
+  if (changes.removed > 0) {
+    parts.push(`移除 ${changes.removed} 个指标`);
+  }
+  if (changes.modified > 0) {
+    parts.push(`修改 ${changes.modified} 个指标 SQL`);
+  }
+  return parts.length === 0 ? "无指标差异" : parts.join("、");
+}
+
+function MetricSqlDialog({
+  open,
+  onOpenChange,
+  comparisonName,
+  metric,
+  onApply
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  comparisonName: string;
+  metric: PackMetricConfig | undefined;
+  onApply: (sql: string) => void;
+}) {
+  const [sql, setSql] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    setSql(metric?.sql ?? "");
+    setError(null);
+  }, [open, metric]);
+
+  function handleApply(): void {
+    if (sql.length > METRIC_SQL_MAX_LENGTH) {
+      setError(`SQL 口径最多 ${METRIC_SQL_MAX_LENGTH} 个字符。`);
+      return;
+    }
+    onApply(sql);
+  }
+
+  const metricLabel =
+    metric === undefined ? "-" : `${metric.code || "-"} · ${metric.name || "未命名指标"}`;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>指标 SQL 口径</DialogTitle>
+          <DialogDescription>
+            比对「{comparisonName}」· {metricLabel}。仅用于文档与审计说明；系统不会执行该
+            SQL，也不会影响指标计算。应用后需点击「保存并发布」生成新版本。
+          </DialogDescription>
+        </DialogHeader>
+
+        <Field
+          label="SQL 口径（可选）"
+          hint={`留空表示移除该说明；最多 ${METRIC_SQL_MAX_LENGTH} 个字符。`}
+        >
+          <Textarea
+            rows={12}
+            value={sql}
+            onChange={(event) => setSql(event.target.value)}
+            maxLength={METRIC_SQL_MAX_LENGTH}
+            spellCheck={false}
+            placeholder="SELECT ..."
+            className="font-mono text-xs"
+          />
+        </Field>
+        <div className="mt-1 text-right text-[11px] tabular-nums text-slate-400">
+          {sql.length} / {METRIC_SQL_MAX_LENGTH}
+        </div>
+
+        {error === null ? null : (
+          <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div className="mt-5 flex justify-end gap-2 border-t border-slate-100 pt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            取消
+          </Button>
+          <Button onClick={handleApply}>应用修改</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function PackPanel({ pack }: { pack: Pack }) {
   const utils = trpc.useUtils();
   const toast = useToast();
@@ -563,6 +713,10 @@ function PackPanel({ pack }: { pack: Pack }) {
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [configPreview, setConfigPreview] = useState<unknown>(null);
+  const [sqlTarget, setSqlTarget] = useState<{
+    comparisonIndex: number;
+    metricIndex: number;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -574,8 +728,15 @@ function PackPanel({ pack }: { pack: Pack }) {
   const config = edited ?? baseConfig;
   const changes =
     baseConfig !== null && edited !== null ? diffMetricChanges(baseConfig, edited) : null;
-  const dirty = changes !== null && changes.added + changes.removed > 0;
+  const dirty =
+    changes !== null && changes.added + changes.removed + changes.modified > 0;
   const addTarget = addMetricIndex === null ? undefined : config?.comparisons[addMetricIndex];
+  const sqlComparison =
+    sqlTarget === null ? undefined : config?.comparisons[sqlTarget.comparisonIndex];
+  const sqlMetric =
+    sqlComparison === undefined || sqlTarget === null
+      ? undefined
+      : sqlComparison.metrics[sqlTarget.metricIndex];
   const publishVersionNo =
     confirmState !== null && confirmState.kind === "publish" ? confirmState.versionNo : null;
 
@@ -593,6 +754,15 @@ function PackPanel({ pack }: { pack: Pack }) {
     }
     setEdited(addMetricToComparison(config, addMetricIndex, metric));
     setAddMetricIndex(null);
+    setSaveError(null);
+  }
+
+  function applyMetricSql(sql: string): void {
+    if (config === null || sqlTarget === null) {
+      return;
+    }
+    setEdited(updateMetricSql(config, sqlTarget.comparisonIndex, sqlTarget.metricIndex, sql));
+    setSqlTarget(null);
     setSaveError(null);
   }
 
@@ -737,6 +907,9 @@ function PackPanel({ pack }: { pack: Pack }) {
                     comparison={comparison}
                     onAdd={() => setAddMetricIndex(index)}
                     onRemove={(metricIndex) => removeMetric(index, metricIndex)}
+                    onEditSql={(metricIndex) =>
+                      setSqlTarget({ comparisonIndex: index, metricIndex })
+                    }
                   />
                 ))}
 
@@ -751,7 +924,7 @@ function PackPanel({ pack }: { pack: Pack }) {
                   >
                     <span className="text-xs text-slate-700">
                       {dirty
-                        ? `待发布变更：新增 ${changes?.added ?? 0} 个、移除 ${changes?.removed ?? 0} 个指标`
+                        ? `待发布变更：${describeMetricChanges(changes)}`
                         : "修改后与当前指标一致，无需保存"}
                     </span>
                     <div className="flex items-center gap-2">
@@ -760,6 +933,7 @@ function PackPanel({ pack }: { pack: Pack }) {
                         size="sm"
                         onClick={() => {
                           setEdited(null);
+                          setSqlTarget(null);
                           setSaveError(null);
                         }}
                       >
@@ -793,6 +967,20 @@ function PackPanel({ pack }: { pack: Pack }) {
           existingCodes={allMetricCodes(config)}
           suggestedCode={nextMetricCode(config)}
           onAdd={addMetric}
+        />
+      )}
+
+      {config === null || sqlComparison === undefined || sqlMetric === undefined ? null : (
+        <MetricSqlDialog
+          open={sqlTarget !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSqlTarget(null);
+            }
+          }}
+          comparisonName={sqlComparison.name ?? sqlComparison.code}
+          metric={sqlMetric}
+          onApply={applyMetricSql}
         />
       )}
 
@@ -918,8 +1106,9 @@ function PackPanel({ pack }: { pack: Pack }) {
             "发布后当前版本自动停用，新版本用于后续执行；历史结果仍按原版本口径保留。"
           ) : (
             <>
-              将基于 v{currentVersion?.versionNo ?? "-"} 创建新版本：新增 {changes?.added ?? 0}{" "}
-              个、移除 {changes?.removed ?? 0} 个指标。发布后当前版本自动停用，下一次执行开始使用新配置。
+              将基于 v{currentVersion?.versionNo ?? "-"} 创建新版本：
+              {describeMetricChanges(changes)}。指标 SQL 口径仅作文档与审计说明，不参与执行。
+              发布后当前版本自动停用，下一次执行开始使用新配置。
             </>
           )
         }
@@ -982,7 +1171,7 @@ export function PacksPage() {
     <div>
       <PageHeader
         title="指标管理"
-        description="按系统间对账关系查看指标包与指标明细；新增或移除指标会生成新版本，确认发布后生效。"
+        description="按系统间对账关系查看指标包与指标明细；指标 SQL 口径仅作文档/审计说明，不参与执行。新增、移除指标或修改 SQL 口径会生成新版本，确认发布后生效。"
         actions={
           <div className="w-64">
             <SelectMenu

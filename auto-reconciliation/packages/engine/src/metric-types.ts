@@ -76,6 +76,9 @@ export const filterConfigSchema = z.object({
 
 export type FilterConfig = z.infer<typeof filterConfigSchema>;
 
+/** 指标 SQL 口径说明的最大长度（仅文档/审计用途，不参与执行）。 */
+export const METRIC_SQL_MAX_LENGTH = 20_000;
+
 export const metricConfigSchema = z
   .object({
     code: z.string().regex(/^M\d{3}$/, "指标代码必须为 M + 三位数字"),
@@ -93,7 +96,9 @@ export const metricConfigSchema = z
         maxDistinct: z.number().int().min(1).optional()
       })
       .optional(),
-    rateField: z.string().optional()
+    rateField: z.string().optional(),
+    /** 指标 SQL 口径说明：仅作文档/审计记录，引擎不会执行 */
+    sql: z.string().max(METRIC_SQL_MAX_LENGTH).optional()
   })
   .superRefine((metric, ctx) => {
     if (metric.type === "AMOUNT_FIELDS" && (metric.fields?.length ?? 0) === 0) {

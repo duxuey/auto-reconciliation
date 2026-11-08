@@ -19,6 +19,8 @@ export interface PackMetricConfig {
     maxDistinct?: number;
   };
   rateField?: string;
+  /** 指标 SQL 口径说明：仅作文档/审计记录，不参与执行 */
+  sql?: string;
   [key: string]: unknown;
 }
 
@@ -63,7 +65,8 @@ function readMetric(value: Record<string, unknown>): PackMetricConfig {
     ...value,
     code: typeof value.code === "string" ? value.code : "",
     name: typeof value.name === "string" ? value.name : "",
-    type: typeof value.type === "string" ? value.type : ""
+    type: typeof value.type === "string" ? value.type : "",
+    sql: typeof value.sql === "string" ? value.sql : undefined
   } as PackMetricConfig;
 }
 
@@ -168,33 +171,80 @@ export function removeMetricFromComparison(
   return next;
 }
 
+/** 设置或清除指标的 SQL 口径说明（空/纯空白表示移除）。 */
+export function updateMetricSql(
+  config: PackConfig,
+  comparisonIndex: number,
+  metricIndex: number,
+  sql: string
+): PackConfig {
+  const next = clonePackConfig(config);
+  const comparison = next.comparisons[comparisonIndex];
+  if (comparison === undefined) {
+    return next;
+  }
+  const metric = comparison.metrics[metricIndex];
+  if (metric === undefined) {
+    return next;
+  }
+  if (sql.trim() === "") {
+    delete metric.sql;
+  } else {
+    metric.sql = sql;
+  }
+  return next;
+}
+
 export interface MetricChanges {
   added: number;
   removed: number;
+  modified: number;
   addedCodes: string[];
   removedCodes: string[];
+  modifiedCodes: string[];
 }
 
-function metricKeys(config: PackConfig): string[] {
-  const keys: string[] = [];
+function metricIndexByKey(config: PackConfig): Map<string, PackMetricConfig> {
+  const byKey = new Map<string, PackMetricConfig>();
   for (const comparison of config.comparisons) {
     for (const metric of comparison.metrics) {
-      keys.push(`${comparison.code}::${metric.code}`);
+      byKey.set(`${comparison.code}::${metric.code}`, metric);
     }
   }
-  return keys;
+  return byKey;
 }
 
-/** 比较两份配置的指标差异（按 比对代码 + 指标代码）。 */
+function metricSql(metric: PackMetricConfig): string {
+  return typeof metric.sql === "string" ? metric.sql : "";
+}
+
+/** 比较两份配置的指标差异（按 比对代码 + 指标代码）；SQL 口径变化计入 modified。 */
 export function diffMetricChanges(base: PackConfig, next: PackConfig): MetricChanges {
-  const baseKeys = new Set(metricKeys(base));
-  const nextKeys = new Set(metricKeys(next));
-  const addedCodes = [...nextKeys].filter((key) => !baseKeys.has(key));
-  const removedCodes = [...baseKeys].filter((key) => !nextKeys.has(key));
+  const baseByKey = metricIndexByKey(base);
+  const nextByKey = metricIndexByKey(next);
+  const addedCodes: string[] = [];
+  const removedCodes: string[] = [];
+  const modifiedCodes: string[] = [];
+
+  for (const [key, metric] of nextByKey) {
+    const baseMetric = baseByKey.get(key);
+    if (baseMetric === undefined) {
+      addedCodes.push(key);
+    } else if (metricSql(baseMetric) !== metricSql(metric)) {
+      modifiedCodes.push(key);
+    }
+  }
+  for (const key of baseByKey.keys()) {
+    if (!nextByKey.has(key)) {
+      removedCodes.push(key);
+    }
+  }
   return {
     added: addedCodes.length,
     removed: removedCodes.length,
+    modified: modifiedCodes.length,
     addedCodes,
-    removedCodes
+    removedCodes,
+    modifiedCodes
   };
 }

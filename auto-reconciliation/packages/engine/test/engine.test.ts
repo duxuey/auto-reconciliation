@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { NormalizedRecord } from "@shared/types";
 import {
+  METRIC_SQL_MAX_LENGTH,
   diffMoney,
   exceedsTolerance,
   normalizeMoney,
   parseBusinessDate,
   parseInstant,
+  parsePackConfig,
   runPack,
   sumMoney,
+  type MetricConfig,
   type PackConfig
 } from "../src/index.js";
 
@@ -61,6 +64,53 @@ const baseConfig: PackConfig = {
     }
   ]
 };
+
+function sqlConfig(sql: string | undefined): PackConfig {
+  const metric: MetricConfig = { code: "M001", name: "总条数", type: "ROW_COUNT" };
+  if (sql !== undefined) {
+    metric.sql = sql;
+  }
+  return {
+    comparisons: [
+      {
+        code: "MAIN",
+        leftDataset: "L",
+        rightDataset: "R",
+        keyFields: ["no"],
+        metrics: [metric]
+      }
+    ]
+  };
+}
+
+describe("指标 SQL 口径（仅文档/审计）", () => {
+  it("解析时保留 sql，且允许缺省", () => {
+    expect(parsePackConfig(sqlConfig(undefined)).comparisons[0]?.metrics[0]?.sql).toBeUndefined();
+    expect(parsePackConfig(sqlConfig("SELECT 1")).comparisons[0]?.metrics[0]?.sql).toBe(
+      "SELECT 1"
+    );
+  });
+
+  it("长度上限为 20000 字符", () => {
+    expect(() => parsePackConfig(sqlConfig("x".repeat(METRIC_SQL_MAX_LENGTH)))).not.toThrow();
+    expect(() =>
+      parsePackConfig(sqlConfig("x".repeat(METRIC_SQL_MAX_LENGTH + 1)))
+    ).toThrow();
+  });
+
+  it("不执行、不影响结果、不进入执行输出", () => {
+    const marker = "__SHOULD_NOT_LEAK__";
+    const records: NormalizedRecord[] = [
+      record("LEFT", "L", "L1", { no: "A" }, {}),
+      record("RIGHT", "R", "R1", { no: "A" }, {})
+    ];
+    const withoutSql = runPack(sqlConfig(undefined), records);
+    const withSql = runPack(sqlConfig(`SELECT '${marker}'`), records);
+
+    expect(withSql).toEqual(withoutSql);
+    expect(JSON.stringify(withSql)).not.toContain(marker);
+  });
+});
 
 describe("money", () => {
   it("归一化与求和", () => {

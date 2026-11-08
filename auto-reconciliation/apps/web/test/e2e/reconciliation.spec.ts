@@ -149,6 +149,43 @@ test.describe("高级设置", () => {
     await expect(page.getByRole("button", { name: "+ 新增指标" }).first()).toBeVisible();
   });
 
+  test("指标 SQL 口径可查看、暂存修改并放弃", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("checkbox").check();
+    await page.goto("/packs");
+    await expect(page.getByRole("heading", { name: "指标管理" })).toBeVisible();
+
+    await page
+      .getByRole("button", { name: /编辑指标 M\d+ 的 SQL 口径/ })
+      .first()
+      .click();
+    const sqlDialog = page.getByRole("dialog");
+    await expect(sqlDialog.getByRole("heading", { name: "指标 SQL 口径" })).toBeVisible();
+    await expect(sqlDialog.getByText(/系统不会执行该 SQL/)).toBeVisible();
+
+    const textarea = sqlDialog.getByRole("textbox", { name: /SQL 口径/ });
+    await textarea.fill("SELECT 1\nFROM dual");
+    await sqlDialog.getByRole("button", { name: "应用修改" }).click();
+    await expect(sqlDialog).toBeHidden();
+
+    await expect(page.getByText("有未保存修改").first()).toBeVisible();
+    await expect(page.getByText(/修改 1 个指标 SQL/).first()).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "保存并发布" }).first()
+    ).toBeEnabled();
+
+    await page.getByRole("button", { name: "放弃修改" }).first().click();
+    await expect(page.getByText("有未保存修改")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "保存并发布" })).toHaveCount(0);
+
+    await page.getByRole("button", { name: "+ 新增指标" }).first().click();
+    const addDialog = page.getByRole("dialog");
+    await expect(addDialog.getByRole("heading", { name: "新增指标" })).toBeVisible();
+    await expect(addDialog.getByRole("textbox", { name: /SQL 口径/ })).toBeVisible();
+    await addDialog.getByRole("button", { name: "取消" }).click();
+    await expect(addDialog).toBeHidden();
+  });
+
   test("环境配置可查看环境、系统 schema 与对账关系", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("checkbox").check();
