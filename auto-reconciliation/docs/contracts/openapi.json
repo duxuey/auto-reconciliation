@@ -1,0 +1,784 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "业再财自动对账系统 API",
+    "version": "1.0.0",
+    "description": "由路由注册处 zod 契约机械投影；事实源是路由挂载的 zod schema，本文件不是第二份事实"
+  },
+  "paths": {
+    "/api/reconciliation/environments": {
+      "get": {
+        "summary": "查询环境列表",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      },
+      "post": {
+        "summary": "创建环境",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_ENVIRONMENT_CONFLICT",
+          "BIZ_RECONCILIATION_REQUEST_INVALID_INPUT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/environments/{id}": {
+      "get": {
+        "summary": "查询环境详情",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_ENVIRONMENT_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      },
+      "patch": {
+        "summary": "更新环境",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_ENVIRONMENT_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/environments/{id}/test-connection": {
+      "post": {
+        "summary": "测试环境数据库连接",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_ENVIRONMENT_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/environments/{id}/systems": {
+      "get": {
+        "summary": "查询环境下各系统 schema 配置",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_ENVIRONMENT_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      },
+      "put": {
+        "summary": "配置环境下系统 schema",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_ENVIRONMENT_NOT_FOUND",
+          "BIZ_RECONCILIATION_SYSTEM_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/systems": {
+      "get": {
+        "summary": "查询系统列表",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/pairs": {
+      "get": {
+        "summary": "查询对账关系列表",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/packs": {
+      "get": {
+        "summary": "查询指标包列表",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      },
+      "post": {
+        "summary": "创建指标包",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_PACK_ALREADY_EXISTS",
+          "BIZ_RECONCILIATION_REQUEST_INVALID_INPUT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/packs/{id}": {
+      "get": {
+        "summary": "查询指标包详情",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_PACK_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/packs/{id}/versions": {
+      "get": {
+        "summary": "查询指标包版本列表",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_PACK_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      },
+      "post": {
+        "summary": "创建指标包草稿版本",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_PACK_NOT_FOUND",
+          "BIZ_RECONCILIATION_PACK_VERSION_INVALID_INPUT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/packs/{id}/versions/{vid}/validate": {
+      "post": {
+        "summary": "校验指标包版本配置",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_PACK_VERSION_INVALID_INPUT",
+          "BIZ_RECONCILIATION_PACK_VERSION_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/packs/{id}/versions/{vid}/publish": {
+      "post": {
+        "summary": "发布指标包版本（L3，dryRun/confirm）",
+        "x-governance": "L3",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_PACK_VERSION_CONFLICT",
+          "BIZ_RECONCILIATION_PACK_VERSION_DRYRUN_FAILED"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/datasets": {
+      "get": {
+        "summary": "查询数据集列表",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/datasets/{code}": {
+      "put": {
+        "summary": "新增或更新数据集映射",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_IMPORT_INVALID_INPUT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/datasets/{code}/sync": {
+      "post": {
+        "summary": "只读同步数据集（READONLY_SQL）",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_DATASET_NOT_FOUND",
+          "BIZ_RECONCILIATION_DATASET_SYNC_UNAVAILABLE"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/import-batches": {
+      "post": {
+        "summary": "上传 CSV/JSON 并导入数据集",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_DATASET_NOT_FOUND",
+          "BIZ_RECONCILIATION_IMPORT_INVALID_INPUT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      },
+      "get": {
+        "summary": "查询导入批次",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/import-batches/{id}": {
+      "get": {
+        "summary": "查询导入批次详情",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_IMPORT_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/import-batches/{id}/errors": {
+      "get": {
+        "summary": "查询导入行错误",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_IMPORT_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/runs": {
+      "post": {
+        "summary": "创建指标执行批次",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_RUN_INVALID_INPUT",
+          "BIZ_RECONCILIATION_RUN_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      },
+      "get": {
+        "summary": "查询执行批次列表",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/runs/{id}": {
+      "get": {
+        "summary": "查询执行批次",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_RUN_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/runs/{id}/summary": {
+      "get": {
+        "summary": "查询指标汇总（SQL 同款口径）",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_RUN_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/runs/{id}/diffs": {
+      "get": {
+        "summary": "查询执行批次差异明细",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_RUN_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/runs/{id}/cancel": {
+      "post": {
+        "summary": "取消执行批次",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_RUN_CONFLICT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/runs/{id}/replay": {
+      "post": {
+        "summary": "按当前数据重放执行批次",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_RUN_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/diffs": {
+      "get": {
+        "summary": "查询差异明细",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/diffs/{id}": {
+      "get": {
+        "summary": "查询差异详情与源记录钻取",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_DIFF_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/diffs/{id}/assign": {
+      "post": {
+        "summary": "指派差异",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_DIFF_CONFLICT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/diffs/{id}/investigate": {
+      "post": {
+        "summary": "开始调查差异",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_DIFF_CONFLICT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/diffs/{id}/resolve": {
+      "post": {
+        "summary": "解决差异",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_DIFF_CONFLICT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/diffs/{id}/write-off": {
+      "post": {
+        "summary": "差异核销（L3，confirm）",
+        "x-governance": "L3",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_DIFF_CONFLICT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/diffs/{id}/reopen": {
+      "post": {
+        "summary": "重开差异",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_DIFF_CONFLICT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/diffs/{id}/comments": {
+      "post": {
+        "summary": "添加差异处理备注",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_DIFF_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/diffs/{id}/adjustments": {
+      "post": {
+        "summary": "创建调整建议",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_DIFF_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/adjustments": {
+      "get": {
+        "summary": "查询调整建议",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/adjustments/{id}/submit": {
+      "post": {
+        "summary": "提交调整建议",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_ADJUSTMENT_CONFLICT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/adjustments/{id}/approve": {
+      "post": {
+        "summary": "审批调整建议（L3，confirm）",
+        "x-governance": "L3",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_ADJUSTMENT_CONFLICT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/adjustments/{id}/reject": {
+      "post": {
+        "summary": "驳回调整建议",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_ADJUSTMENT_CONFLICT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/adjustments/export": {
+      "get": {
+        "summary": "导出调整建议 CSV",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_REQUEST_INVALID_INPUT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/gates/{stage}": {
+      "get": {
+        "summary": "查询阶段闸门",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_GATE_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/gates/{stage}/sign-off": {
+      "post": {
+        "summary": "闸门签核（L3，dryRun/confirm）",
+        "x-governance": "L3",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_GATE_CONFLICT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/reports/overview": {
+      "get": {
+        "summary": "对账概览",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/reports/metrics": {
+      "get": {
+        "summary": "指标结果报表",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/reports/diffs/aging": {
+      "get": {
+        "summary": "差异账龄报表",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/reports/finance-scope": {
+      "get": {
+        "summary": "全辖财务核对报表清单",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/jobs/{id}": {
+      "get": {
+        "summary": "查询作业状态",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_JOB_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/automation/config": {
+      "get": {
+        "summary": "查询自动对账配置与调度状态",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      },
+      "put": {
+        "summary": "保存自动对账配置",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_ENVIRONMENT_NOT_FOUND",
+          "BIZ_RECONCILIATION_REQUEST_INVALID_INPUT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/automation/runs": {
+      "get": {
+        "summary": "查询自动对账执行记录",
+        "x-governance": "L1",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/automation/runs/{id}": {
+      "get": {
+        "summary": "查询自动对账执行详情",
+        "x-governance": "L1",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_AUTOMATION_NOT_FOUND"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      },
+      "delete": {
+        "summary": "删除自动对账执行记录",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_AUTOMATION_NOT_FOUND",
+          "BIZ_RECONCILIATION_AUTOMATION_CONFLICT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/automation/run-now": {
+      "post": {
+        "summary": "立即执行一次自动对账",
+        "x-governance": "L2",
+        "x-error-codes": [
+          "BIZ_RECONCILIATION_AUTOMATION_INVALID_INPUT",
+          "BIZ_RECONCILIATION_AUTOMATION_CONFLICT"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/automation/test-notify": {
+      "post": {
+        "summary": "发送自动对账测试通知",
+        "x-governance": "L2",
+        "x-error-codes": [],
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,2 @@
+DROP INDEX "uq_biz_reconciliation_import_batch_file";--> statement-breakpoint
+CREATE UNIQUE INDEX "uq_biz_reconciliation_import_batch_file" ON "biz_reconciliation_import_batch" USING btree ("tenant_id","environment_id","dataset_code","file_hash","mapping_hash");

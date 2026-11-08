@@ -1,0 +1,4 @@
+c_pk_id,c_rgst_no,n_outst_tms,c_plcy_no,c_prod_no,c_extract_currency,c_extract_outst_flag,c_migrate_flag,c_source,c_sys_code,d_outst_time,n_this_outst_amnt,n_this_fee_outst_amnt,n_this_settl_amnt,n_this_fee_settl_amnt,n_e_this_outst_amnt,n_e_this_fee_outst_amnt,n_e_this_settl_amnt,n_e_this_fee_settl_amnt,n_extract_rmb_exch
+K1,C1,1,P1,PR1,CNY,1,0,190,CPROP,2026-10-01,100,0,0,0,100,0,0,0,7.2
+K2,C2,1,P2,PR1,CNY,1,0,190,CPROP,2026-10-02,200,0,0,0,200,0,0,0,7.2
+K3,C3,1,P3,PR1,CNY,1,0,190,CPROP,2026-10-03,300,0,0,0,300,0,0,0,7.2

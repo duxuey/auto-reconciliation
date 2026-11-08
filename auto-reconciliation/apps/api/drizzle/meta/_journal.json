@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793173091487,
+      "tag": "0000_nappy_zemo",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793173475577,
+      "tag": "0001_secret_hellion",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793350368384,
+      "tag": "0002_dapper_human_torch",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793351204523,
+      "tag": "0003_oval_the_captain",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793352206393,
+      "tag": "0004_violet_blade",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794020319290,
+      "tag": "0005_busy_masked_marvel",
+      "breakpoints": true
+    }
+  ]
+}

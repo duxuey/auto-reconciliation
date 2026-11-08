@@ -1,0 +1,3 @@
+c_pk_id,c_rgst_no,n_orig_outst_tms,c_plcy_no,c_prod_no,c_bsns_src,c_clm_cur,c_coins_code,c_claim_type,n_rbk_seq,c_migrate_flag,c_inwd_mark,d_clm_generate_time,n_outst_amnt,n_fee_outst_amnt,n_this_settl_amnt,n_this_fee_settl_amnt
+R1,C1,1,P1,PR1,,CNY,CO1,0,0,0,0,2026-10-01,100,0,0,0
+R2,C2,1,P2,PR1,,CNY,CO1,0,0,0,0,2026-10-02,200,11,0,0

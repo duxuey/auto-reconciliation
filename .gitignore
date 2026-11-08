@@ -1,0 +1,4 @@
+# 仅保留对账系统代码；以下与 auto-reconciliation 同级的参考工程/资料不纳入版本库
+/ri-service/
+/ri-web/
+/自动对账指标/

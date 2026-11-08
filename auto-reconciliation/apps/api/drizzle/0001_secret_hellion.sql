@@ -1,0 +1,1 @@
+ALTER TABLE "biz_reconciliation_staging_record" ADD COLUMN "attributes_ext" jsonb NOT NULL;

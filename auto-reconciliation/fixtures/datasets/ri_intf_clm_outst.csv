@@ -1,0 +1,4 @@
+c_pk_id,c_rgst_no,n_orig_outst_tms,c_plcy_no,c_prod_no,c_clm_cur,c_claim_type,n_rbk_seq,c_migrate_flag,c_inwd_mark,d_clm_generate_time,n_outst_amnt,n_fee_outst_amnt,n_this_settl_amnt,n_this_fee_settl_amnt,n_rmb_outst_amnt,n_rmb_fee_outst_amnt,n_rmb_this_settl_amnt,n_rmb_this_fee_settl_amnt,n_rmb_clm_exch
+R1,C1,1,P1,PR1,CNY,0,0,0,0,2026-10-01,100,0,0,0,100,0,0,0,7.2
+R2,C2,1,P2,PR1,CNY,0,0,0,0,2026-10-02,200,0,10,0,200,0,0,0,7.2
+R4,C4,1,P4,PR1,CNY,0,0,0,0,2026-10-04,400,0,0,0,400,0,0,0,7.2

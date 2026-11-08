@@ -1,0 +1,2 @@
+c_pk_id,c_batch_no,c_dept_code,c_bill_year,c_bill_month,c_bill_period,c_trty_no,c_bill_type,c_prtc_mark,c_fee_currency,c_fee_code,n_fee_amnt,n_rmb_fee_amnt,c_cav_flag,d_send_rp_time
+L4,RPB004,D003,2026,10,2026-10M,T004,T,1,CNY,PREM,800.00,800.00,D,2026-10-08 00:00:00

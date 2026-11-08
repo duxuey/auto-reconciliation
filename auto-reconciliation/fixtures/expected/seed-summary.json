@@ -1,0 +1,69 @@
+{
+  "description": "由既有指标 SQL 口径录制的种子数据期望结果；test:oracle 逐指标比对",
+  "period": {
+    "periodStartDate": "2026-10-01",
+    "periodEndDate": "2026-10-31"
+  },
+  "packs": {
+    "RP_RI": [
+      { "code": "M001", "result": "PASS", "total": 5, "fail": 0 },
+      { "code": "M002", "result": "FAIL", "total": 8, "fail": 1 },
+      { "code": "M003", "result": "FAIL", "total": 10, "fail": 2 }
+    ],
+    "UW_RI_FAC": [
+      { "code": "M001", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M002", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M003", "result": "FAIL", "total": 3, "fail": 1 },
+      { "code": "M004", "result": "FAIL", "total": 3, "fail": 1 },
+      { "code": "M005", "result": "PASS", "total": 2, "fail": 0 },
+      { "code": "M006", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M007", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M008", "result": "PASS", "total": 2, "fail": 0 },
+      { "code": "M101", "result": "PASS", "total": 8, "fail": 0 },
+      { "code": "M102", "result": "FAIL", "total": 16, "fail": 1 },
+      { "code": "M103", "result": "PASS", "total": 8, "fail": 0 }
+    ],
+    "CLM_RI_MAIN": [
+      { "code": "M001", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M002", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M003", "result": "FAIL", "total": 3, "fail": 1 },
+      { "code": "M004", "result": "FAIL", "total": 3, "fail": 1 },
+      { "code": "M005", "result": "PASS", "total": 2, "fail": 0 },
+      { "code": "M006", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M007", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M008", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M101", "result": "PASS", "total": 8, "fail": 0 },
+      { "code": "M102", "result": "FAIL", "total": 8, "fail": 1 },
+      { "code": "M109", "result": "PASS", "total": 2, "fail": 0 }
+    ],
+    "CLM_RI_COINS": [
+      { "code": "M201", "result": "FAIL", "total": 3, "fail": 1 },
+      { "code": "M202", "result": "FAIL", "total": 3, "fail": 1 },
+      { "code": "M203", "result": "FAIL", "total": 3, "fail": 1 },
+      { "code": "M204", "result": "PASS", "total": 2, "fail": 0 },
+      { "code": "M205", "result": "PASS", "total": 2, "fail": 0 },
+      { "code": "M206", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M207", "result": "PASS", "total": 2, "fail": 0 },
+      { "code": "M208", "result": "FAIL", "total": 4, "fail": 1 },
+      { "code": "M209", "result": "PASS", "total": 4, "fail": 0 }
+    ],
+    "CLM_RI_FAC": [
+      { "code": "M001", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M002", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M003", "result": "FAIL", "total": 3, "fail": 1 },
+      { "code": "M004", "result": "FAIL", "total": 3, "fail": 1 },
+      { "code": "M005", "result": "PASS", "total": 2, "fail": 0 },
+      { "code": "M006", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M007", "result": "PASS", "total": 3, "fail": 0 },
+      { "code": "M008", "result": "PASS", "total": 2, "fail": 0 },
+      { "code": "M101", "result": "PASS", "total": 8, "fail": 0 },
+      { "code": "M102", "result": "FAIL", "total": 8, "fail": 1 },
+      { "code": "M109", "result": "PASS", "total": 2, "fail": 0 }
+    ],
+    "CLM_RI_CVRG": [
+      { "code": "M301", "result": "FAIL", "total": 16, "fail": 1 },
+      { "code": "M302", "result": "FAIL", "total": 3, "fail": 1 },
+      { "code": "M303", "result": "FAIL", "total": 3, "fail": 1 }
+    ]
+  }
+}

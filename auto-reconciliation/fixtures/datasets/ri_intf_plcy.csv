@@ -1,0 +1,4 @@
+c_pk_id,c_appl_no,c_plcy_no,c_endr_no,n_endr_tms,c_kind_no,c_prod_no,c_dept_code,c_bsns_src,c_amnt_cur,c_prem_cur,c_migrate_flag,c_biz_type,n_rbk_seq,d_undr_qual_time,n_amnt,n_amnt_var,n_rmb_amnt,n_rmb_amnt_var,n_prem,n_prem_var,n_notax_prem,n_notax_prem_var,n_rmb_prem,n_rmb_prem_var,n_rmb_notax_prem,n_rmb_notax_prem_var,n_vat_amnt,n_vat_amnt_var,n_rmb_vat_amnt,n_rmb_vat_amnt_var
+R1,A1,P1,E1,0,K1,PR1,D1,4000000,CNY,CNY,0,N,0,2026-10-01,100000,0,100000,0,1000,0,943.40,0,1000,0,943.40,0,56.60,0,56.60,0
+R2,A2,P2,E2,0,K1,PR1,D1,4000000,CNY,CNY,0,N,0,2026-10-02,200000,0,200000,0,2010,0,1886.79,0,2000,0,1886.79,0,113.21,0,113.21,0
+R4,A4,P4,E4,0,K1,PR1,D1,4000000,CNY,CNY,0,N,0,2026-10-04,400000,0,400000,0,4000,0,3773.58,0,4000,0,3773.58,0,226.42,0,226.42,0

@@ -1,0 +1,1 @@
+ALTER TABLE "biz_reconciliation_system" ALTER COLUMN "system_type" SET DATA TYPE varchar(32);
