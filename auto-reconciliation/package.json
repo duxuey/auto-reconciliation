@@ -19,6 +19,7 @@
     "db:generate": "pnpm --filter @infra/biz-reconciliation db:generate",
     "db:migrate": "pnpm --filter @infra/biz-reconciliation db:migrate",
     "seed": "pnpm --filter @infra/biz-reconciliation seed",
+    "clean:reconciliation": "pnpm --filter @infra/biz-reconciliation clean:reconciliation",
     "contracts:extract": "pnpm --filter @infra/biz-reconciliation contracts:extract"
   },
   "devDependencies": {

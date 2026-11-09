@@ -4,6 +4,7 @@ import type {
   PackConfig,
   CheckStage
 } from "@infra/biz-reconciliation-engine";
+import { METRIC_SQL_BY_PACK } from "./metric-sql.js";
 
 export interface DatasetSeed {
   datasetCode: string;
@@ -705,17 +706,14 @@ const CLM_FAC_METRICS: MetricConfig[] = [
   }
 ];
 
-export const PACK_SEEDS: PackSeed[] = [
+const BASE_PACK_SEEDS: PackSeed[] = [
   {
     packCode: "RP_RI",
     packName: "再保送收付↔收付账单",
     checkStage: "INTERFACE",
     pairCode: "RI_RP",
     description: "对齐 reinsure_rp_reconciliation_checks.sql：M001 条数、M002 金额、M003 遗漏/多出",
-    sourceScripts: [
-      "../自动对账指标/收付与再保/reinsure_rp_reconciliation_checks_summary.sql",
-      "../自动对账指标/收付与再保/reinsure_rp_reconciliation_checks_diff_detail.sql"
-    ],
+    sourceScripts: ["apps/api/src/seed/metric-sql/rp-ri.sql"],
     config: {
       comparisons: [
         {
@@ -764,9 +762,7 @@ export const PACK_SEEDS: PackSeed[] = [
     checkStage: "INTERFACE",
     pairCode: "NB_UW_RI",
     description: "对齐自动对账-临分分入承保与再保核对指标：M001-M008、M101-M103",
-    sourceScripts: [
-      "../自动对账指标/承保与再保/自动对账-临分分入承保与再保核对指标汇总.sql"
-    ],
+    sourceScripts: ["apps/api/src/seed/metric-sql/uw-fac.sql"],
     config: {
       comparisons: [
         {
@@ -822,9 +818,7 @@ export const PACK_SEEDS: PackSeed[] = [
     checkStage: "INTERFACE",
     pairCode: "NB_CLM_RI",
     description: "对齐自动对账-再保理赔核对指标：M001-M008、M101、M102、M109",
-    sourceScripts: [
-      "../自动对账指标/理赔与再保/自动对账-再保理赔核对指标汇总.sql"
-    ],
+    sourceScripts: ["apps/api/src/seed/metric-sql/claims-combined.sql"],
     config: {
       comparisons: [
         {
@@ -887,9 +881,7 @@ export const PACK_SEEDS: PackSeed[] = [
     checkStage: "INTERFACE",
     pairCode: "NB_CLM_RI",
     description: "对齐自动对账-再保理赔核对指标共保组 M201-M209",
-    sourceScripts: [
-      "../自动对账指标/理赔与再保/自动对账-再保理赔核对指标汇总.sql"
-    ],
+    sourceScripts: ["apps/api/src/seed/metric-sql/claims-combined.sql"],
     config: {
       comparisons: [
         {
@@ -934,9 +926,7 @@ export const PACK_SEEDS: PackSeed[] = [
     checkStage: "INTERFACE",
     pairCode: "NB_CLM_RI",
     description: "对齐自动对账-临分分入理赔与再保核对指标 M001-M008、M101、M102、M109",
-    sourceScripts: [
-      "../自动对账指标/理赔与再保/自动对账-临分分入理赔与再保核对指标汇总.sql"
-    ],
+    sourceScripts: ["apps/api/src/seed/metric-sql/claims-fac.sql"],
     config: {
       comparisons: [
         {
@@ -994,9 +984,7 @@ export const PACK_SEEDS: PackSeed[] = [
     checkStage: "INTERFACE",
     pairCode: "NB_CLM_RI",
     description: "对齐自动对账-再保理赔险别核对指标 M301-M303",
-    sourceScripts: [
-      "../自动对账指标/理赔与再保/自动对账-再保理赔险别核对指标汇总.sql"
-    ],
+    sourceScripts: ["apps/api/src/seed/metric-sql/claims-combined.sql"],
     config: {
       comparisons: [
         {
@@ -1093,6 +1081,34 @@ export const PACK_SEEDS: PackSeed[] = [
     }
   }
 ];
+
+/** 将固化的指标 SQL 口径挂到对应指标包；通用包无 SQL 来源，保持原样。 */
+function withMetricSql(pack: PackSeed): PackSeed {
+  const sqlByCode = METRIC_SQL_BY_PACK[pack.packCode];
+  if (sqlByCode === undefined) {
+    return pack;
+  }
+  const configuredCodes = new Set<string>();
+  const comparisons = pack.config.comparisons.map((comparison) => ({
+    ...comparison,
+    metrics: comparison.metrics.map((metric) => {
+      configuredCodes.add(metric.code);
+      const sql = sqlByCode[metric.code];
+      if (sql === undefined) {
+        throw new Error(`指标包 ${pack.packCode} 的指标 ${metric.code} 缺少 SQL`);
+      }
+      return { ...metric, sql };
+    })
+  }));
+  for (const code of Object.keys(sqlByCode)) {
+    if (!configuredCodes.has(code)) {
+      throw new Error(`指标包 ${pack.packCode} 的 SQL 映射包含未知指标 ${code}`);
+    }
+  }
+  return { ...pack, config: { ...pack.config, comparisons } };
+}
+
+export const PACK_SEEDS: PackSeed[] = BASE_PACK_SEEDS.map(withMetricSql);
 
 export const SYSTEM_SEEDS: SystemSeed[] = [
   {

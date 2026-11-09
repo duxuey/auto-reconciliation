@@ -656,7 +656,7 @@ function MetricSqlDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-5xl">
         <DialogHeader>
           <DialogTitle>指标 SQL 口径</DialogTitle>
           <DialogDescription>
@@ -670,7 +670,7 @@ function MetricSqlDialog({
           hint={`留空表示移除该说明；最多 ${METRIC_SQL_MAX_LENGTH} 个字符。`}
         >
           <Textarea
-            rows={12}
+            rows={16}
             value={sql}
             onChange={(event) => setSql(event.target.value)}
             maxLength={METRIC_SQL_MAX_LENGTH}

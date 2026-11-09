@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EXTRACT_PROFILES } from "@adapter/legacy-mysql";
 import {
   datasetMappingSchema,
+  METRIC_SQL_MAX_LENGTH,
   parsePackConfig
 } from "@infra/biz-reconciliation-engine";
 import {
@@ -138,5 +139,33 @@ describe("种子指标包配置", () => {
       0
     );
     expect(metricCount).toBe(55);
+  });
+
+  it("48 项指标附带 SQL 口径，通用包保持为空", () => {
+    const metrics = PACK_SEEDS.flatMap((pack) =>
+      pack.config.comparisons.flatMap((comparison) => comparison.metrics)
+    );
+    const withSql = metrics.filter((metric) => metric.sql !== undefined);
+    expect(withSql).toHaveLength(48);
+    for (const metric of withSql) {
+      expect(metric.sql?.trim(), metric.code).not.toBe("");
+      expect(metric.sql?.length, metric.code).toBeLessThanOrEqual(METRIC_SQL_MAX_LENGTH);
+    }
+
+    for (const pack of PACK_SEEDS) {
+      const packMetrics = pack.config.comparisons.flatMap(
+        (comparison) => comparison.metrics
+      );
+      if (pack.packCode === "NB_UW_CLM_GENERIC") {
+        expect(packMetrics).toHaveLength(7);
+        for (const metric of packMetrics) {
+          expect(metric.sql, `${pack.packCode} ${metric.code}`).toBeUndefined();
+        }
+      } else {
+        for (const metric of packMetrics) {
+          expect(metric.sql, `${pack.packCode} ${metric.code}`).toBeDefined();
+        }
+      }
+    }
   });
 });
