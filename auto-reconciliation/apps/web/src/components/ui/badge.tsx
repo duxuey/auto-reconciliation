@@ -7,8 +7,7 @@ import {
   IMPORT_STATUS_LABELS,
   METRIC_RESULT_LABELS,
   RUN_STATUS_LABELS,
-  statusTone,
-  type BadgeTone
+  statusTone
 } from "../../lib/labels";
 
 type Tone = "success" | "danger" | "warning" | "info" | "neutral";
@@ -19,6 +18,14 @@ const TONES: Record<Tone, string> = {
   warning: "bg-amber-50 text-amber-700 ring-amber-200",
   info: "bg-blue-50 text-blue-700 ring-blue-200",
   neutral: "bg-slate-100 text-slate-600 ring-slate-200"
+};
+
+const DOT_TONES: Record<Tone, string> = {
+  success: "bg-emerald-500",
+  danger: "bg-red-500",
+  warning: "bg-amber-500",
+  info: "bg-blue-500",
+  neutral: "bg-slate-400"
 };
 
 export function Badge({
@@ -65,5 +72,14 @@ export function ResultBadge({
   if (result === null || result === undefined || result === "") {
     return <Badge tone="neutral">-</Badge>;
   }
-  return <Badge tone={statusTone(result) as BadgeTone}>{label ?? defaultLabel(result)}</Badge>;
+  const tone = statusTone(result) as Tone;
+  return (
+    <Badge tone={tone}>
+      <span
+        aria-hidden="true"
+        className={cn("mr-1.5 h-1.5 w-1.5 rounded-full", DOT_TONES[tone])}
+      />
+      {label ?? defaultLabel(result)}
+    </Badge>
+  );
 }

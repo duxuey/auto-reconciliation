@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AgingBars } from "../components/AgingBars";
 import { PageHeader } from "../components/PageHeader";
 import { QueryState } from "../components/QueryState";
 import { ResultBadge } from "../components/ui/badge";
@@ -7,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Field, Input } from "../components/ui/input";
 import { EmptyRow, Table, Td, Th } from "../components/ui/table";
 import { useToast } from "../components/ui/toast";
-import { formatCount } from "../lib/format";
 import { METRIC_RESULT_LABELS, labelOf } from "../lib/labels";
 import { usePageFilters } from "../lib/pageFilters";
 import { useScope } from "../lib/scope";
@@ -92,7 +92,7 @@ export function ReportsPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-end gap-3">
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-card">
         <Field label="期间起">
           <Input
             type="date"
@@ -165,20 +165,10 @@ export function ReportsPage() {
           </CardHeader>
           <CardContent>
             <QueryState isLoading={aging.isLoading} error={aging.error}>
-              <div className="space-y-3">
-                {(aging.data?.buckets ?? []).map((bucket) => (
-                  <div
-                    key={bucket.label}
-                    className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 text-xs"
-                  >
-                    <span className="text-slate-600">{bucket.label}</span>
-                    <span className="font-medium text-slate-900">{bucket.count}</span>
-                  </div>
-                ))}
-                <div className="border-t border-slate-100 pt-2 text-right text-xs text-slate-500">
-                  合计 {formatCount(aging.data?.total ?? 0)}
-                </div>
-              </div>
+              <AgingBars
+                buckets={aging.data?.buckets ?? []}
+                total={aging.data?.total}
+              />
             </QueryState>
           </CardContent>
         </Card>

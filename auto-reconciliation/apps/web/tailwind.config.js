@@ -13,7 +13,8 @@ export default {
         "primary-foreground": "hsl(210 40% 98%)",
         destructive: "hsl(0 72% 51%)",
         "destructive-foreground": "hsl(210 40% 98%)",
-        accent: "hsl(210 40% 96%)"
+        accent: "hsl(210 40% 96%)",
+        canvas: "#f5f7fb"
       },
       fontSize: {
         "2xs": ["0.75rem", { lineHeight: "1rem" }],
@@ -22,7 +23,13 @@ export default {
         base: ["1rem", { lineHeight: "1.625rem" }],
         lg: ["1.25rem", { lineHeight: "1.75rem" }],
         xl: ["1.5rem", { lineHeight: "2rem" }],
-        "2xl": ["1.75rem", { lineHeight: "2.25rem" }]
+        "2xl": ["1.75rem", { lineHeight: "2.25rem" }],
+        "3xl": ["1.625rem", { lineHeight: "2.125rem" }],
+        stat: ["1.875rem", { lineHeight: "2.25rem" }]
+      },
+      boxShadow: {
+        card: "0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.05)",
+        lift: "0 10px 24px -12px rgb(15 23 42 / 0.25)"
       }
     }
   },

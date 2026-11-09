@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../components/PageHeader";
+import {
+  IconActivity,
+  IconAlert,
+  IconCheck,
+  IconDiff,
+  IconPack
+} from "../components/icons";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, StatCard } from "../components/ui/card";
 import { ConfirmDialog } from "../components/ui/confirm-dialog";
@@ -36,13 +43,21 @@ function StepCard({
   children: ReactNode;
 }) {
   return (
-    <Card className={cn(active === true ? "border-blue-300 shadow-md" : undefined)}>
+    <Card
+      className={cn(
+        active === true
+          ? "border-blue-200 shadow-lift ring-1 ring-blue-100"
+          : undefined
+      )}
+    >
       <CardHeader>
         <div className="flex items-start gap-3">
           <span
             className={cn(
-              "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-              active === true ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
+              "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-bold",
+              active === true
+                ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm shadow-blue-500/30"
+                : "bg-slate-100 text-slate-500 ring-1 ring-slate-200"
             )}
           >
             {index}
@@ -50,7 +65,7 @@ function StepCard({
           <div>
             <CardTitle>{title}</CardTitle>
             {description === undefined ? null : (
-              <p className="mt-0.5 text-xs text-slate-500">{description}</p>
+              <p className="mt-0.5 text-sm text-slate-500">{description}</p>
             )}
           </div>
         </div>
@@ -435,8 +450,8 @@ function WorkbenchSteps({
         description="将直连源库读取期间数据，并为配置就绪的指标包执行对账。"
         active={readinessData?.summary.canRun === true && runRows.length === 0}
       >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-xs leading-5 text-slate-600">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50/60 px-4 py-3.5 ring-1 ring-inset ring-blue-100">
+          <div className="text-sm leading-6 text-slate-600">
             将执行 <span className="font-medium text-slate-900">{readinessData?.summary.readyPackCount ?? 0}</span>{" "}
             个指标包，期间 {period.periodStartDate} 至 {period.periodEndDate}
             {readinessData !== undefined && readinessData.skippedPacks.length > 0 ? (
@@ -463,8 +478,18 @@ function WorkbenchSteps({
         active={hasActiveRun}
       >
         <div className="mb-4 grid gap-3 md:grid-cols-4">
-          <StatCard label="指标包" value={formatCount(latestByPack.length)} />
-          <StatCard label="指标总数" value={formatCount(totalMetric)} />
+          <StatCard
+            label="指标包"
+            value={formatCount(latestByPack.length)}
+            tone="blue"
+            icon={<IconPack className="h-5 w-5" />}
+          />
+          <StatCard
+            label="指标总数"
+            value={formatCount(totalMetric)}
+            tone="indigo"
+            icon={<IconActivity className="h-5 w-5" />}
+          />
           <StatCard
             label="未通过指标"
             value={
@@ -472,8 +497,21 @@ function WorkbenchSteps({
                 {formatCount(totalFail)}
               </span>
             }
+            tone={totalFail > 0 ? "red" : "emerald"}
+            icon={
+              totalFail > 0 ? (
+                <IconAlert className="h-5 w-5" />
+              ) : (
+                <IconCheck className="h-5 w-5" />
+              )
+            }
           />
-          <StatCard label="差异条数" value={formatCount(diffRows.length)} />
+          <StatCard
+            label="差异条数"
+            value={formatCount(diffRows.length)}
+            tone="violet"
+            icon={<IconDiff className="h-5 w-5" />}
+          />
         </div>
         {runRows.length === 0 ? (
           <EmptyState title="本期间还没有执行记录" description="点击上方「开始对账」创建批次。" />
@@ -515,7 +553,7 @@ function WorkbenchSteps({
         )}
         <div className="mt-3">
           <Link
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm font-medium text-blue-600 hover:underline"
             to={`/reports?pairId=${pairId}&${periodQuery(period)}`}
           >
             查看对账报表

@@ -1,6 +1,14 @@
 import { Link } from "react-router-dom";
+import { AgingBars } from "../components/AgingBars";
 import { PageHeader } from "../components/PageHeader";
 import { QueryState } from "../components/QueryState";
+import {
+  IconAlert,
+  IconDiff,
+  IconOverview,
+  IconPack
+} from "../components/icons";
+import { Badge } from "../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, StatCard } from "../components/ui/card";
 import { Table, Td, Th, EmptyRow } from "../components/ui/table";
 import { formatCount, formatDate } from "../lib/format";
@@ -28,21 +36,33 @@ export function OverviewPage() {
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard label="指标包" value={formatCount(packs.length)} hint="已启用的对账场景" />
+        <StatCard
+          label="指标包"
+          value={formatCount(packs.length)}
+          hint="已启用的对账场景"
+          tone="blue"
+          icon={<IconPack className="h-5 w-5" />}
+        />
         <StatCard
           label="未处理差异"
           value={formatCount(totalOpenDiffs)}
           hint="待处理 / 已指派 / 处理中"
+          tone="amber"
+          icon={<IconDiff className="h-5 w-5" />}
         />
         <StatCard
           label="最近未通过指标"
           value={formatCount(totalFailMetrics)}
           hint="各包最新一次执行汇总"
+          tone="red"
+          icon={<IconAlert className="h-5 w-5" />}
         />
         <StatCard
           label="差异账龄"
           value={formatCount(aging.data?.total ?? 0)}
           hint="待处理差异总数"
+          tone="violet"
+          icon={<IconOverview className="h-5 w-5" />}
         />
       </div>
 
@@ -80,9 +100,9 @@ export function OverviewPage() {
                           ) : null}
                         </Td>
                         <Td>
-                          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+                          <Badge tone="neutral">
                             {labelOf(CHECK_STAGE_LABELS, pack.checkStage)}
-                          </span>
+                          </Badge>
                         </Td>
                         <Td>
                           {pack.latestRun === null ? (
@@ -131,28 +151,10 @@ export function OverviewPage() {
           </CardHeader>
           <CardContent>
             <QueryState isLoading={aging.isLoading} error={aging.error}>
-              <div className="space-y-3">
-                {(aging.data?.buckets ?? []).map((bucket) => {
-                  const max = Math.max(
-                    1,
-                    ...(aging.data?.buckets ?? []).map((item) => item.count)
-                  );
-                  return (
-                    <div key={bucket.label}>
-                      <div className="mb-1 flex justify-between text-xs text-slate-600">
-                        <span>{bucket.label}</span>
-                        <span>{bucket.count}</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-slate-100">
-                        <div
-                          className="h-2 rounded-full bg-blue-500"
-                          style={{ width: `${(bucket.count / max) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <AgingBars
+                buckets={aging.data?.buckets ?? []}
+                total={aging.data?.total}
+              />
             </QueryState>
           </CardContent>
         </Card>

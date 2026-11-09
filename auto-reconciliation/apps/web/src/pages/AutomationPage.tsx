@@ -1,6 +1,12 @@
 import { Fragment, useState } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { QueryState } from "../components/QueryState";
+import {
+  IconActivity,
+  IconAlert,
+  IconCheck,
+  IconRuns
+} from "../components/icons";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import {
@@ -228,6 +234,8 @@ export function AutomationPage() {
           hint={
             overview === undefined ? undefined : `${overview.configuredPackCount} 个指标包`
           }
+          tone="blue"
+          icon={<IconActivity className="h-5 w-5" />}
         />
         <StatCard
           label="最近执行指标"
@@ -237,24 +245,44 @@ export function AutomationPage() {
               ? "尚未执行"
               : `${latestPeriod} · 执行关系 ${latestRun.pairExecutedCount}/${latestRun.pairCount}`
           }
+          tone="indigo"
+          icon={<IconRuns className="h-5 w-5" />}
         />
         <StatCard
           label="最近通过指标"
           value={latestRun === null ? "-" : latestRun.passedMetricCount}
           hint={latestRun === null ? "尚未执行" : "最近一次自动对账"}
+          tone="emerald"
+          icon={<IconCheck className="h-5 w-5" />}
         />
         <StatCard
           label="最近未通过指标"
-          value={
-            latestRun === null ? (
-              "-"
-            ) : latestRun.failMetricCount > 0 ? (
-              <span className="text-red-600">{latestRun.failMetricCount}</span>
+          value={latestRun === null ? "-" : latestRun.failMetricCount}
+          hint={
+            latestRun === null
+              ? "尚未执行"
+              : latestRun.runStatus === "FAILED"
+                ? "最近一次执行失败"
+                : latestRun.failMetricCount > 0
+                  ? "需在责任系统核查"
+                  : "全部指标通过"
+          }
+          tone={
+            latestRun === null
+              ? "amber"
+              : latestRun.runStatus === "FAILED" || latestRun.failMetricCount > 0
+                ? "red"
+                : "emerald"
+          }
+          icon={
+            latestRun !== null &&
+            latestRun.runStatus !== "FAILED" &&
+            latestRun.failMetricCount === 0 ? (
+              <IconCheck className="h-5 w-5" />
             ) : (
-              latestRun.failMetricCount
+              <IconAlert className="h-5 w-5" />
             )
           }
-          hint={latestRun === null ? "尚未执行" : "最近一次自动对账"}
         />
       </div>
 
@@ -321,10 +349,10 @@ export function AutomationPage() {
                 <tr>
                   <Th>创建时间</Th>
                   <Th>期间</Th>
-                  <Th>触发</Th>
+                  <Th>执行方式</Th>
                   <Th>状态</Th>
-                  <Th>指标（未通过）</Th>
-                  <Th>差异</Th>
+                  <Th>指标（通过 / 总数）</Th>
+                  <Th>差异条数</Th>
                   <Th>通知</Th>
                   <Th>操作</Th>
                 </tr>
@@ -352,7 +380,16 @@ export function AutomationPage() {
                         </Badge>
                       </Td>
                       <Td className="text-xs">
-                        {row.metricTotal}（{row.failMetricCount}）
+                        <span
+                          className={
+                            row.failMetricCount > 0
+                              ? "font-medium text-red-600"
+                              : "font-medium text-emerald-600"
+                          }
+                        >
+                          {Math.max(0, row.metricTotal - row.failMetricCount)}
+                        </span>
+                        <span className="text-slate-400"> / {row.metricTotal}</span>
                       </Td>
                       <Td className="text-xs">{row.diffCount}</Td>
                       <Td>
@@ -448,8 +485,8 @@ export function AutomationPage() {
                             <tr>
                               <Th>对账关系</Th>
                               <Th>状态</Th>
-                              <Th>指标（未通过）</Th>
-                              <Th>差异</Th>
+                              <Th>指标（通过 / 总数）</Th>
+                              <Th>差异条数</Th>
                               <Th>说明</Th>
                             </tr>
                           </thead>
@@ -474,7 +511,11 @@ export function AutomationPage() {
                                     </Badge>
                                   </Td>
                                   <Td className="text-xs">
-                                    {pair.metricTotal}（{pair.failMetricCount}）
+                                    {Math.max(0, pair.metricTotal - pair.failMetricCount)}
+                                    <span className="text-slate-400">
+                                      {" "}
+                                      / {pair.metricTotal}
+                                    </span>
                                   </Td>
                                   <Td className="text-xs">{pair.diffCount}</Td>
                                   <Td className="text-xs text-slate-500">
@@ -560,7 +601,7 @@ export function AutomationPage() {
                       <div className="mb-2 text-xs font-medium text-slate-600">
                         已生成的通知内容
                       </div>
-                      <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                      <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-700">
                         {detail.messageText}
                       </pre>
                     </div>

@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { DiffDrawer } from "../components/DiffDrawer";
 import { PageHeader } from "../components/PageHeader";
 import { QueryState } from "../components/QueryState";
+import { IconActivity, IconAlert, IconCheck, IconDiff } from "../components/icons";
 import { ResultBadge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, StatCard } from "../components/ui/card";
@@ -76,6 +77,8 @@ export function RunDetailPage() {
     (diff) => selectedMetric === null || diff.metricCode === selectedMetric
   );
   const runStatus = summary.data?.run.runStatus;
+  const metricTotal = summary.data?.run.metricTotal ?? 0;
+  const failMetricCount = summary.data?.run.failMetricCount ?? 0;
 
   if (id === undefined) {
     return <div className="text-sm text-red-600">缺少执行批次 ID</div>;
@@ -118,8 +121,8 @@ export function RunDetailPage() {
       />
 
       <QueryState isLoading={summary.isLoading} error={summary.error}>
-        <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
-          <span className="font-medium text-slate-900">{summary.data?.run.runNo}</span>
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-4 py-3 text-sm shadow-card">
+          <span className="font-semibold text-slate-900">{summary.data?.run.runNo}</span>
           <ResultBadge result={summary.data?.run.runStatus} />
           <span className="text-xs text-slate-500">
             {summary.data?.pack.packName}
@@ -137,14 +140,42 @@ export function RunDetailPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <StatCard label="指标总数" value={summary.data?.run.metricTotal ?? 0} />
+          <StatCard
+            label="指标总数"
+            value={metricTotal}
+            hint="本次执行覆盖的指标"
+            tone="blue"
+            icon={<IconActivity className="h-5 w-5" />}
+          />
+          <StatCard
+            label="通过指标"
+            value={Math.max(0, metricTotal - failMetricCount)}
+            hint="无差异、对账一致"
+            tone="emerald"
+            icon={<IconCheck className="h-5 w-5" />}
+          />
           <StatCard
             label="未通过指标"
-            value={summary.data?.run.failMetricCount ?? 0}
-            hint="任一指标不通过会阻断阶段确认"
+            value={failMetricCount}
+            hint={
+              failMetricCount > 0 ? "需在责任系统核查" : "全部指标均通过"
+            }
+            tone={failMetricCount > 0 ? "red" : "emerald"}
+            icon={
+              failMetricCount > 0 ? (
+                <IconAlert className="h-5 w-5" />
+              ) : (
+                <IconCheck className="h-5 w-5" />
+              )
+            }
           />
-          <StatCard label="差异指标" value={summary.data?.run.failMetricCount ?? 0} />
-          <StatCard label="差异条数" value={(diffs.data ?? []).length} />
+          <StatCard
+            label="差异条数"
+            value={(diffs.data ?? []).length}
+            hint="可在下方明细查看"
+            tone="violet"
+            icon={<IconDiff className="h-5 w-5" />}
+          />
         </div>
 
         <Card className="mt-5">
