@@ -500,28 +500,27 @@ export function AutomationPage() {
                   </section>
 
                   {form.channel === "ROBOT" ? (
-                    <div className="space-y-3 rounded-lg border border-blue-100 bg-blue-50/40 p-3">
-                      <Field label="@ 接收人">
-                        <Input
-                          value={form.toUser}
-                          placeholder="飞书 open_id 或钉钉手机号/userid，多个用 | 分隔；all 表示 @所有人"
-                          onChange={(event) => patchForm({ toUser: event.target.value })}
-                        />
-                      </Field>
-                      <Field label="加签密钥环境变量名（可选）">
-                        <Input
-                          value={form.appSecretEnvKey}
-                          placeholder="如 DINGTALK_ROBOT_SECRET；机器人安全设置为「加签」时必填"
-                          onChange={(event) =>
-                            patchForm({ appSecretEnvKey: event.target.value })
-                          }
-                        />
-                      </Field>
-                      <p className="text-[11px] leading-relaxed text-slate-500">
-                        飞书/钉钉群机器人只能发到群并 @ 指定成员，无法私聊。Webhook 地址与加签密钥只保存
-                        环境变量名，执行时从部署环境读取；飞书 @ 使用 open_id，钉钉 @ 使用手机号或 userid。
-                        钉钉机器人安全设置若选「加签」，请在此填写存放 SEC 密钥的环境变量名；选「自定义关键词」
-                        或 IP 白名单时，该变量未配置即按不签名方式发送。
+                    <div className="space-y-2 rounded-lg border border-blue-100 bg-blue-50/40 p-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <Field label="@ 接收人">
+                          <Input
+                            value={form.toUser}
+                            placeholder="open_id / 手机号 / userid，多个用 | 分隔；all 表示 @所有人"
+                            onChange={(event) => patchForm({ toUser: event.target.value })}
+                          />
+                        </Field>
+                        <Field label="加签密钥环境变量名（可选）">
+                          <Input
+                            value={form.appSecretEnvKey}
+                            placeholder="如 DINGTALK_ROBOT_SECRET，仅保存变量名"
+                            onChange={(event) =>
+                              patchForm({ appSecretEnvKey: event.target.value })
+                            }
+                          />
+                        </Field>
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        群机器人只能发到群并 @ 指定成员；密钥在执行时从部署环境读取。
                       </p>
                     </div>
                   ) : null}
