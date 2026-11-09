@@ -180,7 +180,7 @@ export function DatasetsPage() {
               {uploading ? "上传中…" : "上传并导入"}
             </Button>
             {message === null ? null : (
-              <p className="break-all rounded bg-slate-50 p-2 text-[11px] text-slate-600">
+              <p className="break-all rounded bg-slate-50 p-2 text-xs text-slate-600">
                 {message}
               </p>
             )}
@@ -214,7 +214,7 @@ export function DatasetsPage() {
                       <tr key={dataset.id}>
                         <Td>
                           <div className="font-medium">{dataset.datasetCode}</div>
-                          <div className="text-[11px] text-slate-500">{dataset.datasetName}</div>
+                          <div className="text-xs text-slate-500">{dataset.datasetName}</div>
                         </Td>
                         <Td>{dataset.sourceSystem}</Td>
                         <Td className="text-xs">
@@ -232,8 +232,8 @@ export function DatasetsPage() {
                             {labelOf(TRANSPORT_LABELS, dataset.transport)}
                           </Badge>
                         </Td>
-                        <Td className="font-mono text-[11px]">{dataset.extractProfile ?? "-"}</Td>
-                        <Td className="font-mono text-[11px]">{shortId(dataset.mappingHash)}</Td>
+                        <Td className="font-mono text-xs">{dataset.extractProfile ?? "-"}</Td>
+                        <Td className="font-mono text-xs">{shortId(dataset.mappingHash)}</Td>
                         <Td>
                           {labelOf(PACK_STATUS_LABELS, dataset.datasetStatus)}
                         </Td>

@@ -6,9 +6,6 @@ import { Select } from "./ui/input";
 const BUSINESS_NAV = [
   { to: "/", label: "对账工作台", end: true },
   { to: "/runs", label: "执行记录" },
-  { to: "/diffs", label: "差异处理" },
-  { to: "/adjustments", label: "调整建议" },
-  { to: "/gates", label: "阶段确认" },
   { to: "/reports", label: "对账报表" },
   { to: "/automation", label: "自动对账" }
 ];
@@ -17,7 +14,8 @@ const ADVANCED_NAV = [
   { to: "/overview", label: "运营总览" },
   { to: "/advanced/packs", label: "指标管理" },
   { to: "/advanced/datasets", label: "数据接入" },
-  { to: "/advanced/settings", label: "环境配置" }
+  { to: "/advanced/settings", label: "环境配置" },
+  { to: "/advanced/automation", label: "自动对账配置" }
 ];
 
 function NavItems({
@@ -64,18 +62,18 @@ export function Layout() {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="flex w-56 shrink-0 flex-col border-r border-slate-200 bg-white">
+      <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-5 py-5">
           <div className="text-sm font-semibold tracking-wide text-slate-900">
             业再财自动对账
           </div>
-          <div className="mt-1 text-[11px] text-slate-500">对账工作台</div>
+          <div className="mt-1 text-xs text-slate-500">对账工作台</div>
         </div>
         <nav className="space-y-1 p-3">
           <NavItems items={BUSINESS_NAV} />
           {isAdvanced ? (
             <>
-              <div className="px-3 pb-1 pt-4 text-[11px] font-medium text-slate-400">
+              <div className="px-3 pb-1 pt-4 text-xs font-medium text-slate-400">
                 高级设置
               </div>
               <NavItems items={ADVANCED_NAV} />
@@ -94,8 +92,8 @@ export function Layout() {
             />
             <span>
               <span className="block text-xs font-medium text-slate-700">高级模式</span>
-              <span className="mt-0.5 block text-[11px] leading-4 text-slate-500">
-                配置指标、数据接入与环境连接
+              <span className="mt-0.5 block text-xs leading-4 text-slate-500">
+                配置指标、数据接入、环境连接与自动对账
               </span>
             </span>
           </label>
@@ -107,7 +105,7 @@ export function Layout() {
             <div className="truncate text-sm font-medium text-slate-700">
               合约账 / 临分账自动对账
             </div>
-            <div className="truncate text-[11px] text-slate-400">
+            <div className="truncate text-xs text-slate-400">
               {isAdvanced
                 ? `${environments.find((item) => item.id === environmentId)?.envName ?? "未选择环境"} · ${pair?.pairName ?? "未选择对账关系"}`
                 : `${businessEnvironment?.envName ?? "未设置默认环境"} · ${pair?.pairName ?? "请在对账工作台选择对账关系"}`}
@@ -115,7 +113,7 @@ export function Layout() {
           </div>
           {isAdvanced ? (
             <div className="flex shrink-0 items-center gap-2">
-              <label className="flex items-center gap-1.5 text-[11px] text-slate-500">
+              <label className="flex items-center gap-1.5 text-xs text-slate-500">
                 环境
                 <Select
                   className="h-8 w-32 text-xs"
@@ -130,7 +128,7 @@ export function Layout() {
                   ))}
                 </Select>
               </label>
-              <label className="flex items-center gap-1.5 text-[11px] text-slate-500">
+              <label className="flex items-center gap-1.5 text-xs text-slate-500">
                 对账关系
                 <Select
                   className="h-8 w-52 text-xs"
@@ -147,12 +145,12 @@ export function Layout() {
               </label>
             </div>
           ) : (
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] text-slate-500">
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
               业务模式
             </span>
           )}
         </header>
-        <div className="p-6">
+        <div className="p-6 lg:p-8">
           <Outlet />
         </div>
       </main>

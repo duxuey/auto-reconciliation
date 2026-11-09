@@ -33,6 +33,7 @@ import { getPairReadiness } from "../application/readiness.js";
 import {
   deleteAutomationRun,
   getAutomationConfig,
+  getAutomationOverview,
   getAutomationRunById,
   listAutomationRuns,
   startManualRun,
@@ -461,6 +462,11 @@ const workbenchRouter = t.router({
 });
 
 const automationRouter = t.router({
+  overview: publicProcedure
+    .meta({
+      contract: { summary: "自动对账总览", governance: "L1", errors: [] }
+    })
+    .query(async () => getAutomationOverview()),
   getConfig: publicProcedure
     .meta({
       contract: { summary: "自动对账配置与调度状态", governance: "L1", errors: [] }

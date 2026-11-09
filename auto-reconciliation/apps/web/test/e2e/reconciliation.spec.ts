@@ -34,20 +34,22 @@ test.describe("对账工作台（业务模式）", () => {
     await expect(page.getByText("直连源库").first()).toBeVisible();
     await expect(page.getByRole("button", { name: "重新读库" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "开始对账" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "处理差异" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "执行进度与结果" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "处理差异" })).toHaveCount(0);
     await expect(
       page.getByRole("heading", { name: "阶段确认与报表" })
-    ).toBeVisible();
+    ).toHaveCount(0);
   });
 
   test("业务导航只保留对账业务入口", async ({ page }) => {
     await page.goto("/");
+    await expect(page.getByRole("link", { name: "对账工作台", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "执行记录", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "差异处理", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "调整建议", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "阶段确认", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "差异处理", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "调整建议", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "阶段确认", exact: true })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "对账报表", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "自动对账" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "自动对账", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "指标包" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "数据接入" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "环境配置" })).toHaveCount(0);
@@ -71,37 +73,6 @@ test.describe("对账工作台（业务模式）", () => {
     await expect(page.getByText("每条记录对应金额是否一致").first()).toBeVisible();
   });
 
-  test("差异处理可钻取来源记录并处理", async ({ page }) => {
-    await selectPair(page, RP_PAIR_LABEL);
-    await page.getByRole("link", { name: "差异处理", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "差异处理" })).toBeVisible();
-    await page.getByPlaceholder("输入保单号或业务键").fill("RPB003");
-    const row = page.getByRole("row").filter({ hasText: "RPB003" }).first();
-    await row.click();
-    await expect(page.getByRole("heading", { name: /差异详情/ })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "来源记录" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "处理动作" })).toBeVisible();
-  });
-
-  test("调整建议按所选对账关系展示", async ({ page }) => {
-    await selectPair(page, RP_PAIR_LABEL);
-    await page.getByRole("link", { name: "调整建议", exact: true }).click();
-    await expect(
-      page.getByRole("heading", { name: "调整建议", level: 1 })
-    ).toBeVisible();
-    await expect(page.getByRole("heading", { name: /调整建议（/ })).toBeVisible();
-  });
-
-  test("阶段确认展示阻断指标与签核入口", async ({ page }) => {
-    await selectPair(page, RP_PAIR_LABEL);
-    await page.getByRole("link", { name: "阶段确认", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "阶段确认" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "阻断指标" })).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "确认阶段通过" })
-    ).toBeVisible();
-  });
-
   test("报表展示指标结果并支持导出", async ({ page }) => {
     await selectPair(page, RP_PAIR_LABEL);
     await page.getByRole("link", { name: "对账报表", exact: true }).click();
@@ -111,24 +82,41 @@ test.describe("对账工作台（业务模式）", () => {
     await expect(page.getByRole("button", { name: "导出报表 CSV" })).toBeVisible();
   });
 
-  test("自动对账页面可查看调度配置与执行记录", async ({ page }) => {
+  test("自动对账页面展示统计、手动执行与执行记录", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: "自动对账" }).click();
+    await page.getByRole("link", { name: "自动对账", exact: true }).click();
     await expect(page).toHaveURL(/\/automation$/);
     await expect(page.getByRole("heading", { name: "自动对账" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "调度配置" })).toBeVisible();
+
+    await expect(page.getByText("已配置指标", { exact: true })).toBeVisible();
+    await expect(page.getByText("最近执行指标", { exact: true })).toBeVisible();
+    await expect(page.getByText("最近通过指标", { exact: true })).toBeVisible();
+    await expect(page.getByText("最近未通过指标", { exact: true })).toBeVisible();
+
     await expect(page.getByRole("heading", { name: "手动执行" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "执行记录" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "保存配置" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "测试通知" })).toBeVisible();
-    await expect(page.getByText(/下次执行：/)).toBeVisible();
     await expect(page.getByText(/执行时直连源库读取/)).toBeVisible();
+
+    await expect(page.getByRole("heading", { name: "调度配置" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "保存配置" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "测试通知" })).toHaveCount(0);
+    await expect(page.getByText(/下次执行：/)).toHaveCount(0);
+
     await expect(
-      page.getByText(/请先在「数据接入」导入或同步/)
+      page.getByRole("columnheader", { name: /^关系（/ })
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("columnheader", { name: /^批次（成功/ })
     ).toHaveCount(0);
 
-    await page.goto("/advanced/automation");
-    await expect(page).toHaveURL(/\/automation$/);
+    const firstView = page.getByRole("button", { name: "查看", exact: true }).first();
+    if ((await firstView.count()) > 0) {
+      await firstView.click();
+      await expect(page.getByRole("heading", { name: "执行详情" })).toBeVisible();
+      await expect(
+        page.getByRole("columnheader", { name: /^批次（新建/ })
+      ).toHaveCount(0);
+    }
   });
 });
 
@@ -139,6 +127,9 @@ test.describe("高级设置", () => {
     await expect(page.getByRole("link", { name: "指标管理" })).toBeVisible();
     await expect(page.getByRole("link", { name: "数据接入" })).toBeVisible();
     await expect(page.getByRole("link", { name: "环境配置" })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "自动对账配置", exact: true })
+    ).toBeVisible();
 
     await page.goto("/packs");
     await expect(page).toHaveURL(/\/advanced\/packs/);
@@ -147,6 +138,20 @@ test.describe("高级设置", () => {
       page.getByText(/按系统间对账关系查看指标包与指标明细/)
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "+ 新增指标" }).first()).toBeVisible();
+  });
+
+  test("自动对账配置独立位于高级设置", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("checkbox").check();
+    await page.getByRole("link", { name: "自动对账配置", exact: true }).click();
+    await expect(page).toHaveURL(/\/advanced\/automation$/);
+    await expect(
+      page.getByRole("heading", { name: "自动对账配置" })
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "调度配置" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "保存配置" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "测试通知" })).toBeVisible();
+    await expect(page.getByText(/下次执行：/)).toBeVisible();
   });
 
   test("指标 SQL 口径可查看、暂存修改并放弃", async ({ page }) => {

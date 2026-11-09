@@ -99,7 +99,7 @@ export function TimePicker({ value, onChange, ariaLabel }: TimePickerProps) {
 
           <div className="flex gap-2">
             <div className="min-w-0 flex-1">
-              <div className="mb-1 text-center text-[11px] text-slate-400">小时</div>
+              <div className="mb-1 text-center text-xs text-slate-400">小时</div>
               <div className="grid max-h-52 grid-cols-4 gap-1 overflow-y-auto pr-0.5">
                 {HOURS.map((hour) => (
                   <button
@@ -117,7 +117,7 @@ export function TimePicker({ value, onChange, ariaLabel }: TimePickerProps) {
             </div>
             <div className="w-px shrink-0 bg-slate-100" />
             <div className="min-w-0 flex-1">
-              <div className="mb-1 text-center text-[11px] text-slate-400">分钟</div>
+              <div className="mb-1 text-center text-xs text-slate-400">分钟</div>
               <div className="grid max-h-52 grid-cols-4 gap-1 overflow-y-auto pr-0.5">
                 {MINUTES.map((minute) => (
                   <button
@@ -142,7 +142,7 @@ export function TimePicker({ value, onChange, ariaLabel }: TimePickerProps) {
                 type="button"
                 onClick={() => onChange(preset)}
                 className={cn(
-                  "rounded-md px-2 py-1 text-[11px] tabular-nums transition-colors",
+                  "rounded-md px-2 py-1 text-xs tabular-nums transition-colors",
                   preset === value
                     ? "bg-blue-50 font-medium text-blue-700"
                     : "text-slate-500 hover:bg-slate-100"
@@ -154,7 +154,7 @@ export function TimePicker({ value, onChange, ariaLabel }: TimePickerProps) {
             <button
               type="button"
               onClick={close}
-              className="ml-auto rounded-md px-2 py-1 text-[11px] font-medium text-blue-600 transition-colors hover:bg-blue-50"
+              className="ml-auto rounded-md px-2 py-1 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50"
             >
               完成
             </button>

@@ -17,12 +17,7 @@ import { uploadImport } from "../lib/api";
 import { cn } from "../lib/cn";
 import { friendlyError } from "../lib/errors";
 import { formatCount, formatDate } from "../lib/format";
-import {
-  DIFF_STATUS_LABELS,
-  GATE_STATUS_LABELS,
-  READINESS_STATUS_LABELS,
-  labelOf
-} from "../lib/labels";
+import { READINESS_STATUS_LABELS, labelOf } from "../lib/labels";
 import { currentMonthPeriod, periodFromSearch, periodQuery, type DatePeriod } from "../lib/period";
 import { useScope } from "../lib/scope";
 import { trpc } from "../lib/trpc";
@@ -143,7 +138,7 @@ export function WorkbenchPage() {
     <div className="space-y-4">
       <PageHeader
         title="对账工作台"
-        description="按步骤完成一轮对账：选择关系与期间、确认数据、开始对账、处理差异、阶段确认。"
+        description="按步骤完成一轮对账：选择关系与期间、确认数据、开始对账、查看结果与报表。"
       />
 
       <StepCard index={1} title="选择对账关系与期间" active={pairId === undefined || period === undefined}>
@@ -230,7 +225,6 @@ function WorkbenchSteps({
   const utils = trpc.useUtils();
   const [uploadDataset, setUploadDataset] = useState<string | null>(null);
   const [confirmRun, setConfirmRun] = useState(false);
-  const [confirmSignOff, setConfirmSignOff] = useState(false);
   const [errorsDataset, setErrorsDataset] = useState<string | null>(null);
 
   const readiness = trpc.workbench.readiness.useQuery({
@@ -257,12 +251,6 @@ function WorkbenchSteps({
     ...period,
     limit: 500
   });
-  const adjustments = trpc.adjustment.list.useQuery({ pairId, environmentId });
-  const aging = trpc.report.aging.useQuery({ environmentId, pairId });
-  const gate = trpc.gate.get.useQuery(
-    { stage: "INTERFACE", environmentId, pairId, ...period },
-    { retry: false }
-  );
   const batchErrors = trpc.importBatch.errors.useQuery(
     { id: errorsDataset ?? "" },
     { enabled: errorsDataset !== null }
@@ -289,16 +277,6 @@ function WorkbenchSteps({
       void utils.workbench.readiness.invalidate();
       void utils.run.list.invalidate();
       void utils.report.overview.invalidate();
-      void utils.gate.get.invalidate();
-    },
-    onError: (error) => toast.error(friendlyError(error, isAdvanced))
-  });
-
-  const signOff = trpc.gate.signOff.useMutation({
-    onSuccess: () => {
-      setConfirmSignOff(false);
-      toast.success("阶段已确认通过。");
-      void utils.gate.get.invalidate();
     },
     onError: (error) => toast.error(friendlyError(error, isAdvanced))
   });
@@ -318,18 +296,6 @@ function WorkbenchSteps({
     }
     return [...map.values()];
   }, [runRows]);
-
-  const diffCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const item of diffRows) {
-      counts[item.diffStatus] = (counts[item.diffStatus] ?? 0) + 1;
-    }
-    return counts;
-  }, [diffRows]);
-
-  const pendingAdjustments = (adjustments.data ?? []).filter(
-    (item) => item.adjustmentStatus === "SUBMITTED"
-  ).length;
 
   const totalMetric = latestByPack.reduce((sum, item) => sum + item.run.metricTotal, 0);
   const totalFail = latestByPack.reduce(
@@ -493,7 +459,7 @@ function WorkbenchSteps({
       <StepCard
         index={4}
         title="执行进度与结果"
-        description="执行期间页面会自动刷新；完成后可进入差异处理。"
+        description="执行期间页面会自动刷新；完成后可查看结果与对账报表。"
         active={hasActiveRun}
       >
         <div className="mb-4 grid gap-3 md:grid-cols-4">
@@ -547,113 +513,12 @@ function WorkbenchSteps({
             </tbody>
           </Table>
         )}
-      </StepCard>
-
-      <StepCard
-        index={5}
-        title="处理差异"
-        description="处理差异不会直接记账；调整建议需提交并审批后导出给责任系统。"
-        active={diffRows.length > 0}
-      >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {(["OPEN", "ASSIGNED", "INVESTIGATING", "RESOLVED", "WRITTEN_OFF"] as const).map(
-            (status) => (
-              <StatCard
-                key={status}
-                label={labelOf(DIFF_STATUS_LABELS, status)}
-                value={formatCount(diffCounts[status] ?? 0)}
-              />
-            )
-          )}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-          <span>待审批调整建议：{formatCount(pendingAdjustments)}</span>
-          <span>待处理差异账龄合计：{formatCount(aging.data?.total ?? 0)}</span>
+        <div className="mt-3">
           <Link
-            className="text-blue-600 hover:underline"
-            to={`/diffs?pairId=${pairId}&${periodQuery(period)}&status=OPEN`}
-          >
-            进入差异处理
-          </Link>
-          <Link
-            className="text-blue-600 hover:underline"
-            to={`/adjustments?pairId=${pairId}&${periodQuery(period)}`}
-          >
-            查看调整建议
-          </Link>
-        </div>
-      </StepCard>
-
-      <StepCard
-        index={6}
-        title="阶段确认与报表"
-        description="所有指标通过后可确认阶段；报表可导出给业务留档。"
-        active={gate.data?.gateStatus === "PASSED"}
-      >
-        {gate.isLoading ? (
-          <p className="py-4 text-sm text-slate-400">正在读取阶段状态…</p>
-        ) : gate.data === undefined ? (
-          <EmptyState
-            title="尚未生成阶段结果"
-            description="请先完成本期间对账，系统会自动生成阶段状态。"
-          />
-        ) : (
-          <>
-            <div className="flex flex-wrap items-center gap-3">
-              <ResultBadge
-                result={gate.data.gateStatus}
-                label={labelOf(GATE_STATUS_LABELS, gate.data.gateStatus)}
-              />
-              <span className="text-xs text-slate-500">
-                {gate.data.signedOffBy === null
-                  ? "尚未签核"
-                  : `签核人：${gate.data.signedOffBy} · ${formatDate(gate.data.signedOffAt)}`}
-              </span>
-              <Button
-                size="sm"
-                disabled={gate.data.gateStatus !== "PASSED" || signOff.isPending}
-                onClick={() => setConfirmSignOff(true)}
-              >
-                确认阶段通过
-              </Button>
-            </div>
-            {gate.data.blockingMetrics.length > 0 ? (
-              <div className="mt-3">
-                <div className="mb-1 text-xs font-medium text-slate-600">阻断指标</div>
-                <Table>
-                  <thead>
-                    <tr>
-                      <Th>指标包</Th>
-                      <Th>指标</Th>
-                      <Th>失败数</Th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {gate.data.blockingMetrics.map((item) => (
-                      <tr key={`${item.packCode}-${item.metricCode}`}>
-                        <Td>{item.packCode}</Td>
-                        <Td>{item.metricName}</Td>
-                        <Td>{formatCount(item.failCount)}</Td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </div>
-            ) : null}
-          </>
-        )}
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Link
-            className="text-xs text-blue-600 hover:underline"
+            className="text-sm text-blue-600 hover:underline"
             to={`/reports?pairId=${pairId}&${periodQuery(period)}`}
           >
             查看对账报表
-          </Link>
-          <Link
-            className="text-xs text-blue-600 hover:underline"
-            to={`/gates?pairId=${pairId}&${periodQuery(period)}`}
-          >
-            查看阶段详情
           </Link>
         </div>
       </StepCard>
@@ -671,26 +536,6 @@ function WorkbenchSteps({
             environmentId,
             periodStartDate: period.periodStartDate,
             periodEndDate: period.periodEndDate
-          })
-        }
-      />
-
-      <ConfirmDialog
-        open={confirmSignOff}
-        onOpenChange={setConfirmSignOff}
-        title="确认阶段通过"
-        description="确认后将写入审计记录，并允许进入后续环节。请确认本期间对账结果已复核。"
-        confirmLabel="确认通过"
-        busy={signOff.isPending}
-        onConfirm={() =>
-          signOff.mutate({
-            stage: "INTERFACE",
-            environmentId,
-            pairId,
-            periodStartDate: period.periodStartDate,
-            periodEndDate: period.periodEndDate,
-            dryRun: false,
-            confirm: true
           })
         }
       />

@@ -1,20 +1,23 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { QueryState } from "../components/QueryState";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  StatCard
+} from "../components/ui/card";
 import { ConfirmDialog } from "../components/ui/confirm-dialog";
 import { DatePicker } from "../components/ui/date-picker";
-import { Field, Input } from "../components/ui/input";
-import { SelectMenu } from "../components/ui/select-menu";
+import { Field } from "../components/ui/input";
 import { EmptyRow, Table, Td, Th } from "../components/ui/table";
-import { TimePicker } from "../components/ui/time-picker";
 import { useToast } from "../components/ui/toast";
 import { friendlyError } from "../lib/errors";
 import { formatDate, formatMoney } from "../lib/format";
 import {
-  AUTOMATION_CHANNEL_LABELS,
   AUTOMATION_NOTIFY_STATUS_LABELS,
   AUTOMATION_PAIR_STATUS_LABELS,
   AUTOMATION_RUN_STATUS_LABELS,
@@ -23,46 +26,16 @@ import {
   labelOf,
   statusTone
 } from "../lib/labels";
-import { useScope } from "../lib/scope";
 import { trpc } from "../lib/trpc";
-
-type Channel = "WEBHOOK" | "APP" | "BOTH" | "ROBOT";
-
-interface ConfigForm {
-  enabled: boolean;
-  runTime: string;
-  channel: Channel;
-  environmentId: string;
-  webhookUrlEnvKey: string;
-  appCorpId: string;
-  appAgentId: string;
-  appSecretEnvKey: string;
-  toUser: string;
-}
-
-interface SummaryPairRunView {
-  runId: string;
-  runNo: string;
-  packCode: string;
-  packName: string;
-  runStatus: string;
-  metricTotal: number;
-  failMetricCount: number;
-  diffCount: number;
-  reused: boolean;
-}
 
 interface SummaryPairView {
   pairId: string;
   pairCode: string;
   pairName: string;
   status: string;
-  createdCount: number;
-  reusedCount: number;
   metricTotal: number;
   failMetricCount: number;
   diffCount: number;
-  runs: SummaryPairRunView[];
   skippedPacks: Array<{ packCode: string; reason: string }>;
   failedPacks: Array<{ packCode: string; message: string }>;
 }
@@ -104,43 +77,43 @@ function FailedMetricDiffs({
         </div>
       ) : (
         <>
-          <div className="mb-1 text-[11px] text-slate-500">
+          <div className="mb-1 text-xs text-slate-500">
             明细为该指标产生的差异记录；条数类指标（总条数/业务键数）为一条汇总差异，失败条数即两侧数量差。
           </div>
           <Table>
-          <thead>
-            <tr>
-              <Th>业务键</Th>
-              <Th>差异类型</Th>
-              <Th>字段</Th>
-              <Th>左侧值</Th>
-              <Th>右侧值</Th>
-              <Th>差异值</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {diffs.map((diff) => (
-              <tr key={diff.id}>
-                <Td
-                  className="max-w-[260px] truncate font-mono text-[11px]"
-                  title={diff.businessKeyText}
-                >
-                  {diff.businessKeyText}
-                </Td>
-                <Td className="text-xs">{diffTypeLabel(diff.diffType)}</Td>
-                <Td className="font-mono text-[11px]">{diff.fieldCode ?? "-"}</Td>
-                <Td className="text-right font-mono text-xs">
-                  {formatMoney(diff.leftValue)}
-                </Td>
-                <Td className="text-right font-mono text-xs">
-                  {formatMoney(diff.rightValue)}
-                </Td>
-                <Td className="text-right font-mono text-xs">
-                  {formatMoney(diff.diffValue)}
-                </Td>
+            <thead>
+              <tr>
+                <Th>业务键</Th>
+                <Th>差异类型</Th>
+                <Th>字段</Th>
+                <Th>左侧值</Th>
+                <Th>右侧值</Th>
+                <Th>差异值</Th>
               </tr>
-            ))}
-          </tbody>
+            </thead>
+            <tbody>
+              {diffs.map((diff) => (
+                <tr key={diff.id}>
+                  <Td
+                    className="max-w-[260px] truncate font-mono text-xs"
+                    title={diff.businessKeyText}
+                  >
+                    {diff.businessKeyText}
+                  </Td>
+                  <Td className="text-xs">{diffTypeLabel(diff.diffType)}</Td>
+                  <Td className="font-mono text-xs">{diff.fieldCode ?? "-"}</Td>
+                  <Td className="text-right font-mono text-xs">
+                    {formatMoney(diff.leftValue)}
+                  </Td>
+                  <Td className="text-right font-mono text-xs">
+                    {formatMoney(diff.rightValue)}
+                  </Td>
+                  <Td className="text-right font-mono text-xs">
+                    {formatMoney(diff.diffValue)}
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
           </Table>
         </>
       )}
@@ -151,10 +124,16 @@ function FailedMetricDiffs({
 export function AutomationPage() {
   const utils = trpc.useUtils();
   const toast = useToast();
-  const { environments } = useScope();
-  const configQuery = trpc.automation.getConfig.useQuery(undefined, {
-    refetchInterval: (query) =>
-      query.state.data?.inFlight === true ? 3000 : false
+  const overviewQuery = trpc.automation.overview.useQuery(undefined, {
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      const running =
+        data?.inFlight === true ||
+        (data?.latestRun !== null &&
+          data?.latestRun !== undefined &&
+          isRunningStatus(data.latestRun.runStatus));
+      return running ? 3000 : false;
+    }
   });
   const runsQuery = trpc.automation.listRuns.useQuery(
     { limit: 20 },
@@ -168,33 +147,11 @@ export function AutomationPage() {
     }
   );
 
-  const [form, setForm] = useState<ConfigForm | null>(null);
-  const [periodStart, setPeriodStart] = useState("");
-  const [periodEnd, setPeriodEnd] = useState("");
+  const [period, setPeriod] = useState<{ start: string; end: string } | null>(null);
   const [notify, setNotify] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
-
-  useEffect(() => {
-    const data = configQuery.data;
-    if (data === undefined || form !== null) {
-      return;
-    }
-    setForm({
-      enabled: data.enabled,
-      runTime: data.runTime,
-      channel: data.channel,
-      environmentId: data.environmentId,
-      webhookUrlEnvKey: data.webhookUrlEnvKey,
-      appCorpId: data.appCorpId ?? "",
-      appAgentId: data.appAgentId ?? "",
-      appSecretEnvKey: data.appSecretEnvKey,
-      toUser: data.toUser ?? ""
-    });
-    setPeriodStart(data.defaultPeriodStartDate);
-    setPeriodEnd(data.defaultPeriodEndDate);
-  }, [configQuery.data, form]);
 
   const detailQuery = trpc.automation.getRun.useQuery(
     { id: selectedId ?? "" },
@@ -207,31 +164,12 @@ export function AutomationPage() {
     }
   );
 
-  const updateConfig = trpc.automation.updateConfig.useMutation({
-    onSuccess: async (result) => {
-      setForm({
-        enabled: result.enabled,
-        runTime: result.runTime,
-        channel: result.channel,
-        environmentId: result.environmentId,
-        webhookUrlEnvKey: result.webhookUrlEnvKey,
-        appCorpId: result.appCorpId ?? "",
-        appAgentId: result.appAgentId ?? "",
-        appSecretEnvKey: result.appSecretEnvKey,
-        toUser: result.toUser ?? ""
-      });
-      toast.success("自动对账配置已保存");
-      await utils.automation.getConfig.invalidate();
-    },
-    onError: (error) => toast.error(friendlyError(error, true))
-  });
-
   const runNow = trpc.automation.runNow.useMutation({
     onSuccess: async (result) => {
       toast.success("已提交执行，可在下方执行记录查看进度。");
       setSelectedId(result.automationRunId);
       await utils.automation.listRuns.invalidate();
-      await utils.automation.getConfig.invalidate();
+      await utils.automation.overview.invalidate();
     },
     onError: (error) => toast.error(friendlyError(error, true))
   });
@@ -244,79 +182,18 @@ export function AutomationPage() {
       }
       setDeletingId(null);
       await utils.automation.listRuns.invalidate();
+      await utils.automation.overview.invalidate();
     },
     onError: (error) => toast.error(friendlyError(error, true))
   });
 
-  const testNotify = trpc.automation.testNotify.useMutation({
-    onSuccess: (result) => {
-      if (result.ok) {
-        toast.success(result.message);
-      } else {
-        toast.error(result.message);
-      }
-    },
-    onError: (error) => toast.error(friendlyError(error, true))
-  });
-
-  const config = configQuery.data;
+  const overview = overviewQuery.data;
+  const latestRun = overview?.latestRun ?? null;
+  const periodStart = period?.start ?? overview?.defaultPeriodStartDate ?? "";
+  const periodEnd = period?.end ?? overview?.defaultPeriodEndDate ?? "";
   const runs = runsQuery.data ?? [];
   const detail = detailQuery.data;
   const summary = (detail?.summaryExt ?? null) as unknown as SummaryView | null;
-
-  function patchForm(patch: Partial<ConfigForm>): void {
-    setForm((current) => (current === null ? current : { ...current, ...patch }));
-  }
-
-  function saveConfig(): void {
-    if (form === null) {
-      return;
-    }
-    if (form.environmentId === "") {
-      toast.error("请选择执行环境");
-      return;
-    }
-    if (form.channel !== "APP" && form.webhookUrlEnvKey.trim() === "") {
-      toast.error("请填写机器人 Webhook 环境变量名");
-      return;
-    }
-    if (form.channel === "ROBOT") {
-      if (form.toUser.trim() === "") {
-        toast.error("请填写需要 @ 的接收人");
-        return;
-      }
-    }
-    if (form.channel === "APP" || form.channel === "BOTH") {
-      if (form.appCorpId.trim() === "") {
-        toast.error("请填写企业微信 CorpID");
-        return;
-      }
-      if (form.appAgentId.trim() === "") {
-        toast.error("请填写企业应用 AgentID");
-        return;
-      }
-      if (!/^\d{1,10}$/.test(form.appAgentId.trim())) {
-        toast.error("AgentID 必须为数字");
-        return;
-      }
-      if (form.toUser.trim() === "") {
-        toast.error("请填写接收人成员账号");
-        return;
-      }
-    }
-    updateConfig.mutate({
-      enabled: form.enabled,
-      runTime: form.runTime,
-      channel: form.channel,
-      environmentId: form.environmentId,
-      webhookUrlEnvKey: form.webhookUrlEnvKey.trim(),
-      appCorpId: form.appCorpId.trim() === "" ? undefined : form.appCorpId.trim(),
-      appAgentId:
-        form.appAgentId.trim() === "" ? undefined : form.appAgentId.trim(),
-      appSecretEnvKey: form.appSecretEnvKey.trim(),
-      toUser: form.toUser.trim() === "" ? undefined : form.toUser.trim()
-    });
-  }
 
   function submitRun(): void {
     if (periodStart === "" || periodEnd === "") {
@@ -330,291 +207,88 @@ export function AutomationPage() {
     });
   }
 
+  const latestPeriod =
+    latestRun === null
+      ? null
+      : latestRun.periodStartDate === latestRun.periodEndDate
+        ? latestRun.periodStartDate
+        : `${latestRun.periodStartDate} ~ ${latestRun.periodEndDate}`;
+
   return (
     <div>
       <PageHeader
         title="自动对账"
-        description="每天按设定时间对全部启用关系执行 T-1 对账，并通过企业微信或飞书/钉钉机器人发送结果；密钥只保存环境变量名。"
+        description="按设定时间自动执行全部启用关系的对账，也可手动补跑指定期间；执行结果与通知状态可在下方查看。"
       />
 
-      <div className="mb-4 grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>调度配置</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <QueryState isLoading={configQuery.isLoading} error={configQuery.error}>
-              {form === null ? null : (
-                <>
-                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-gradient-to-r from-slate-50 to-white px-3 py-2.5">
-                    <span className="flex items-center gap-2">
-                      <span
-                        className={`h-2 w-2 rounded-full ${
-                          form.enabled ? "bg-emerald-500" : "bg-slate-300"
-                        }`}
-                      />
-                      <span className="text-xs font-medium text-slate-700">
-                        {form.enabled ? "自动对账已启用" : "自动对账未启用"}
-                      </span>
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500">
-                        {AUTOMATION_CHANNEL_LABELS[form.channel] ?? form.channel}
-                      </span>
-                    </span>
-                    <span className="text-[11px] text-slate-500">
-                      下次执行：
-                      {form.enabled
-                        ? config?.nextRunAt === null || config?.nextRunAt === undefined
-                          ? "保存后计算"
-                          : formatDate(config.nextRunAt)
-                        : "未启用"}
-                    </span>
-                  </div>
+      <div className="mb-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="已配置指标"
+          value={overview === undefined ? "-" : overview.configuredMetricCount}
+          hint={
+            overview === undefined ? undefined : `${overview.configuredPackCount} 个指标包`
+          }
+        />
+        <StatCard
+          label="最近执行指标"
+          value={latestRun === null ? "-" : latestRun.metricTotal}
+          hint={
+            latestRun === null
+              ? "尚未执行"
+              : `${latestPeriod} · 执行关系 ${latestRun.pairExecutedCount}/${latestRun.pairCount}`
+          }
+        />
+        <StatCard
+          label="最近通过指标"
+          value={latestRun === null ? "-" : latestRun.passedMetricCount}
+          hint={latestRun === null ? "尚未执行" : "最近一次自动对账"}
+        />
+        <StatCard
+          label="最近未通过指标"
+          value={
+            latestRun === null ? (
+              "-"
+            ) : latestRun.failMetricCount > 0 ? (
+              <span className="text-red-600">{latestRun.failMetricCount}</span>
+            ) : (
+              latestRun.failMetricCount
+            )
+          }
+          hint={latestRun === null ? "尚未执行" : "最近一次自动对账"}
+        />
+      </div>
 
-                  <section className="space-y-2.5">
-                    <h3 className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                      <span className="h-3 w-0.5 rounded-full bg-blue-500" />
-                      基本设置
-                    </h3>
-                    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 px-3 py-2.5 transition hover:border-blue-300 hover:bg-blue-50/40">
-                      <input
-                        type="checkbox"
-                        className="mt-0.5 h-4 w-4 accent-blue-600"
-                        checked={form.enabled}
-                        onChange={(event) => patchForm({ enabled: event.target.checked })}
-                      />
-                      <span>
-                        <span className="block text-xs font-medium text-slate-700">
-                          启用每日自动对账
-                        </span>
-                        <span className="mt-0.5 block text-[11px] text-slate-500">
-                          按自然日执行，期间为前一天；服务重启后会补跑当天遗漏的一次。
-                        </span>
-                      </span>
-                    </label>
-                  </section>
-
-                  <section className="space-y-2.5">
-                    <h3 className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                      <span className="h-3 w-0.5 rounded-full bg-blue-500" />
-                      执行计划
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="执行时间">
-                        <TimePicker
-                          ariaLabel="执行时间"
-                          value={form.runTime}
-                          onChange={(value) => patchForm({ runTime: value })}
-                        />
-                      </Field>
-                      <Field label="执行环境">
-                        <SelectMenu
-                          ariaLabel="执行环境"
-                          placeholder="请选择环境"
-                          value={form.environmentId}
-                          options={environments.map((item) => ({
-                            value: item.id,
-                            label: `${item.envCode} · ${item.envName}`
-                          }))}
-                          onChange={(value) => patchForm({ environmentId: value })}
-                        />
-                      </Field>
-                    </div>
-                  </section>
-
-                  <div className="border-t border-slate-100" />
-
-                  <section className="space-y-2.5">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                        <span className="h-3 w-0.5 rounded-full bg-blue-500" />
-                        通知设置
-                      </h3>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {form.channel !== "APP" ? (
-                          <Badge
-                            tone={config?.webhookConfigured === true ? "success" : "neutral"}
-                          >
-                            Webhook {config?.webhookConfigured === true ? "已配置" : "未配置"}
-                          </Badge>
-                        ) : null}
-                        {form.channel === "ROBOT" ? (
-                          <>
-                            <Badge
-                              tone={
-                                config?.appSecretConfigured === true ? "success" : "neutral"
-                              }
-                            >
-                              加签密钥{" "}
-                              {config?.appSecretConfigured === true ? "已配置" : "未配置"}
-                            </Badge>
-                            <Badge
-                              tone={form.toUser.trim() === "" ? "warning" : "success"}
-                            >
-                              @接收人 {form.toUser.trim() === "" ? "未填写" : "已填写"}
-                            </Badge>
-                          </>
-                        ) : null}
-                        {form.channel === "APP" || form.channel === "BOTH" ? (
-                          <Badge
-                            tone={
-                              config?.appFieldsConfigured === true ? "success" : "neutral"
-                            }
-                          >
-                            应用参数{" "}
-                            {config?.appFieldsConfigured === true ? "已填写" : "未填写"}
-                          </Badge>
-                        ) : null}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="通知渠道">
-                        <SelectMenu
-                          ariaLabel="通知渠道"
-                          value={form.channel}
-                          options={(["WEBHOOK", "ROBOT", "APP", "BOTH"] as const).map(
-                            (code) => ({
-                              value: code,
-                              label: AUTOMATION_CHANNEL_LABELS[code] ?? code
-                            })
-                          )}
-                          onChange={(value) =>
-                            patchForm({ channel: value as Channel })
-                          }
-                        />
-                      </Field>
-                      <Field
-                        label={
-                          form.channel === "ROBOT"
-                            ? "机器人 Webhook 环境变量名"
-                            : "Webhook 环境变量名"
-                        }
-                      >
-                        <Input
-                          value={form.webhookUrlEnvKey}
-                          onChange={(event) =>
-                            patchForm({ webhookUrlEnvKey: event.target.value })
-                          }
-                        />
-                      </Field>
-                    </div>
-                  </section>
-
-                  {form.channel === "ROBOT" ? (
-                    <div className="space-y-2 rounded-lg border border-blue-100 bg-blue-50/40 p-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <Field label="@ 接收人">
-                          <Input
-                            value={form.toUser}
-                            placeholder="open_id / 手机号 / userid，多个用 | 分隔；all 表示 @所有人"
-                            onChange={(event) => patchForm({ toUser: event.target.value })}
-                          />
-                        </Field>
-                        <Field label="加签密钥环境变量名（可选）">
-                          <Input
-                            value={form.appSecretEnvKey}
-                            placeholder="如 DINGTALK_ROBOT_SECRET，仅保存变量名"
-                            onChange={(event) =>
-                              patchForm({ appSecretEnvKey: event.target.value })
-                            }
-                          />
-                        </Field>
-                      </div>
-                      <p className="text-[11px] text-slate-500">
-                        群机器人只能发到群并 @ 指定成员；密钥在执行时从部署环境读取。
-                      </p>
-                    </div>
-                  ) : null}
-
-                  {form.channel === "APP" || form.channel === "BOTH" ? (
-                    <div className="space-y-3 rounded-lg border border-blue-100 bg-blue-50/40 p-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <Field label="CorpID">
-                          <Input
-                            value={form.appCorpId}
-                            onChange={(event) => patchForm({ appCorpId: event.target.value })}
-                          />
-                        </Field>
-                        <Field label="AgentID（数字）">
-                          <Input
-                            value={form.appAgentId}
-                            onChange={(event) => patchForm({ appAgentId: event.target.value })}
-                          />
-                        </Field>
-                        <Field label="Secret 环境变量名">
-                          <Input
-                            value={form.appSecretEnvKey}
-                            onChange={(event) =>
-                              patchForm({ appSecretEnvKey: event.target.value })
-                            }
-                          />
-                        </Field>
-                        <Field label="接收人（成员账号）">
-                          <Input
-                            value={form.toUser}
-                            placeholder="userid，多个用 | 分隔"
-                            onChange={(event) => patchForm({ toUser: event.target.value })}
-                          />
-                        </Field>
-                      </div>
-                      <p className="text-[11px] leading-relaxed text-slate-500">
-                        企业应用私聊需在企业微信后台创建自建应用，并把该成员加入应用可见范围；
-                        接收人填写成员账号（userid），Secret 只保存环境变量名。
-                      </p>
-                    </div>
-                  ) : null}
-
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
-                    <span className="text-[11px] text-slate-400">
-                      保存后按新配置重新计算下次执行时间
-                    </span>
-                    <div className="flex gap-2">
-                      <Button disabled={updateConfig.isPending} onClick={saveConfig}>
-                        {updateConfig.isPending ? "保存中…" : "保存配置"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        disabled={testNotify.isPending}
-                        onClick={() => testNotify.mutate()}
-                      >
-                        {testNotify.isPending ? "发送中…" : "测试通知"}
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </QueryState>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>手动执行</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-[11px] text-slate-500">
-              手动执行会覆盖全部启用关系，默认期间为前一天；可用于补跑指定区间。
-            </p>
-            <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
-              执行时直连源库读取，无需预先导入或同步；源库在期间内无数据时标记为「源库期间内无数据」。
-            </p>
-            <div className="grid grid-cols-2 gap-2">
+      <Card className="mb-4">
+        <CardHeader>
+          <CardTitle>手动执行</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-slate-500">
+            手动执行会覆盖全部启用关系，默认期间为前一天；可用于补跑指定区间。执行时直连源库读取，无需预先导入或同步。
+          </p>
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="w-44">
               <Field label="期间起">
                 <DatePicker
                   ariaLabel="期间起"
                   value={periodStart}
-                  onChange={setPeriodStart}
+                  onChange={(value) =>
+                    setPeriod({ start: value, end: periodEnd })
+                  }
                 />
               </Field>
+            </div>
+            <div className="w-44">
               <Field label="期间止">
                 <DatePicker
                   ariaLabel="期间止"
                   align="right"
                   value={periodEnd}
-                  onChange={setPeriodEnd}
+                  onChange={(value) => setPeriod({ start: periodStart, end: value })}
                 />
               </Field>
             </div>
-            <label className="flex items-center gap-2 text-xs text-slate-600">
+            <label className="flex h-10 items-center gap-2 text-xs text-slate-600">
               <input
                 type="checkbox"
                 checked={notify}
@@ -623,18 +297,18 @@ export function AutomationPage() {
               执行完成后发送通知
             </label>
             <Button
-              disabled={runNow.isPending || config?.inFlight === true}
+              disabled={runNow.isPending || overview?.inFlight === true}
               onClick={submitRun}
             >
               {runNow.isPending
                 ? "提交中…"
-                : config?.inFlight === true
+                : overview?.inFlight === true
                   ? "有任务执行中"
                   : "立即执行"}
             </Button>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -649,8 +323,6 @@ export function AutomationPage() {
                   <Th>期间</Th>
                   <Th>触发</Th>
                   <Th>状态</Th>
-                  <Th>关系（执行/无数据/失败）</Th>
-                  <Th>批次（成功/失败/复用）</Th>
                   <Th>指标（未通过）</Th>
                   <Th>差异</Th>
                   <Th>通知</Th>
@@ -659,7 +331,7 @@ export function AutomationPage() {
               </thead>
               <tbody>
                 {runs.length === 0 ? (
-                  <EmptyRow colSpan={10}>暂无自动对账执行记录</EmptyRow>
+                  <EmptyRow colSpan={8}>暂无自动对账执行记录</EmptyRow>
                 ) : (
                   runs.map((row) => (
                     <tr key={row.id} className="hover:bg-slate-50">
@@ -678,14 +350,6 @@ export function AutomationPage() {
                         <Badge tone={statusTone(row.runStatus)}>
                           {labelOf(AUTOMATION_RUN_STATUS_LABELS, row.runStatus)}
                         </Badge>
-                      </Td>
-                      <Td className="text-xs">
-                        {row.pairExecutedCount} / {row.pairNoDataCount} /{" "}
-                        {row.pairFailedCount}
-                      </Td>
-                      <Td className="text-xs">
-                        {row.batchSucceededCount} / {row.batchFailedCount} /{" "}
-                        {row.batchReusedCount}
                       </Td>
                       <Td className="text-xs">
                         {row.metricTotal}（{row.failMetricCount}）
@@ -784,7 +448,6 @@ export function AutomationPage() {
                             <tr>
                               <Th>对账关系</Th>
                               <Th>状态</Th>
-                              <Th>批次（新建/复用/失败）</Th>
                               <Th>指标（未通过）</Th>
                               <Th>差异</Th>
                               <Th>说明</Th>
@@ -792,7 +455,7 @@ export function AutomationPage() {
                           </thead>
                           <tbody>
                             {summary.pairs.length === 0 ? (
-                              <EmptyRow colSpan={6}>本次没有启用的对账关系</EmptyRow>
+                              <EmptyRow colSpan={5}>本次没有启用的对账关系</EmptyRow>
                             ) : (
                               summary.pairs.map((pair) => (
                                 <tr key={pair.pairId}>
@@ -809,13 +472,6 @@ export function AutomationPage() {
                                     >
                                       {labelOf(AUTOMATION_PAIR_STATUS_LABELS, pair.status)}
                                     </Badge>
-                                  </Td>
-                                  <Td className="text-xs">
-                                    {pair.createdCount} / {pair.reusedCount} /{" "}
-                                    {pair.failedPacks.length +
-                                      pair.runs.filter(
-                                        (run) => run.runStatus === "FAILED"
-                                      ).length}
                                   </Td>
                                   <Td className="text-xs">
                                     {pair.metricTotal}（{pair.failMetricCount}）
@@ -924,7 +580,7 @@ export function AutomationPage() {
           }
         }}
         title="删除自动对账记录"
-        description="删除后该条执行记录不再出现在列表中；已生成的对账批次、指标结果和差异仍保留，可在报表与差异页面查看。"
+        description="删除后该条执行记录不再出现在列表中；已生成的对账批次、指标结果和差异仍保留，可在对账报表与执行详情中查看。"
         confirmLabel="删除记录"
         tone="danger"
         busy={deleteRun.isPending}

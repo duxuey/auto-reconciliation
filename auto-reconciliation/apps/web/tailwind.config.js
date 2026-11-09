@@ -14,6 +14,15 @@ export default {
         destructive: "hsl(0 72% 51%)",
         "destructive-foreground": "hsl(210 40% 98%)",
         accent: "hsl(210 40% 96%)"
+      },
+      fontSize: {
+        "2xs": ["0.75rem", { lineHeight: "1rem" }],
+        xs: ["0.8125rem", { lineHeight: "1.125rem" }],
+        sm: ["0.9375rem", { lineHeight: "1.5rem" }],
+        base: ["1rem", { lineHeight: "1.625rem" }],
+        lg: ["1.25rem", { lineHeight: "1.75rem" }],
+        xl: ["1.5rem", { lineHeight: "2rem" }],
+        "2xl": ["1.75rem", { lineHeight: "2.25rem" }]
       }
     }
   },

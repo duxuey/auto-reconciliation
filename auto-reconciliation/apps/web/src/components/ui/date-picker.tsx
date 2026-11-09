@@ -131,7 +131,7 @@ export function DatePicker({
             </button>
           </div>
 
-          <div className="mb-1 grid grid-cols-7 text-center text-[11px] text-slate-400">
+          <div className="mb-1 grid grid-cols-7 text-center text-xs text-slate-400">
             {WEEKDAYS.map((label) => (
               <span key={label} className="py-1">
                 {label}
@@ -171,7 +171,7 @@ export function DatePicker({
           </div>
 
           <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
-            <span className="text-[11px] text-slate-400">今天 {today}</span>
+            <span className="text-xs text-slate-400">今天 {today}</span>
             <button
               type="button"
               onClick={() => {

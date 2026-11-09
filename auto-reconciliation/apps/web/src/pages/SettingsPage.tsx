@@ -356,7 +356,7 @@ export function SettingsPage() {
                           </span>
                         )}
                       </Td>
-                      <Td className="font-mono text-[11px]">
+                      <Td className="font-mono text-xs">
                         {item.dbPasswordEnvKey}
                         {ENV_KEY_PATTERN.test(item.dbPasswordEnvKey) ? null : (
                           <span className="ml-1 font-sans text-red-600">（应为变量名）</span>
@@ -519,7 +519,7 @@ export function SettingsPage() {
                           <div className="font-mono">{item.systemCode}</div>
                           <div className="text-slate-500">{item.systemName}</div>
                         </Td>
-                        <Td className="font-mono text-[11px]">
+                        <Td className="font-mono text-xs">
                           {Object.entries(item.schemaMap).map(([key, value]) => (
                             <div key={key}>
                               {key} → {value}

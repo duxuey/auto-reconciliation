@@ -2,7 +2,8 @@ import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { ulid } from "ulid";
 import {
   addDaysToBusinessDate,
-  businessToday
+  businessToday,
+  parsePackConfig
 } from "@infra/biz-reconciliation-engine";
 import { truncate } from "@shared/utils";
 import { config, readSecret } from "../config.js";
@@ -12,6 +13,8 @@ import {
   automationRun,
   checkDiff,
   checkMetricResult,
+  checkPack,
+  checkPackVersion,
   checkRun
 } from "../db/schema.js";
 import type {
@@ -1050,6 +1053,79 @@ export async function listAutomationRuns(limit = 20) {
     )
     .orderBy(desc(automationRun.createdAt))
     .limit(Math.min(Math.max(limit, 1), 100));
+}
+
+export interface AutomationOverview {
+  configuredMetricCount: number;
+  configuredPackCount: number;
+  latestRun: {
+    id: string;
+    runStatus: AutomationRunStatus;
+    periodStartDate: string;
+    periodEndDate: string;
+    pairCount: number;
+    pairExecutedCount: number;
+    metricTotal: number;
+    failMetricCount: number;
+    passedMetricCount: number;
+    createdAt: Date;
+  } | null;
+  inFlight: boolean;
+  defaultPeriodStartDate: string;
+  defaultPeriodEndDate: string;
+}
+
+/** 自动对账业务页总览：已配置指标数 + 最近一次执行结果 + 手动执行默认值。 */
+export async function getAutomationOverview(): Promise<AutomationOverview> {
+  const versions = await db
+    .select({ configJson: checkPackVersion.configJson })
+    .from(checkPackVersion)
+    .innerJoin(checkPack, eq(checkPack.id, checkPackVersion.packId))
+    .where(
+      and(
+        eq(checkPackVersion.tenantId, config.TENANT_ID),
+        isNull(checkPackVersion.deletedAt),
+        eq(checkPackVersion.versionStatus, "PUBLISHED"),
+        eq(checkPack.tenantId, config.TENANT_ID),
+        isNull(checkPack.deletedAt),
+        eq(checkPack.packStatus, "ACTIVE")
+      )
+    );
+
+  let configuredMetricCount = 0;
+  for (const row of versions) {
+    const parsedPack = parsePackConfig(row.configJson);
+    configuredMetricCount += parsedPack.comparisons.reduce(
+      (sum, comparison) => sum + comparison.metrics.length,
+      0
+    );
+  }
+
+  const latest = (await listAutomationRuns(1))[0] ?? null;
+  const period = resolveDefaultManualPeriod();
+
+  return {
+    configuredMetricCount,
+    configuredPackCount: versions.length,
+    latestRun:
+      latest === null
+        ? null
+        : {
+            id: latest.id,
+            runStatus: latest.runStatus as AutomationRunStatus,
+            periodStartDate: latest.periodStartDate,
+            periodEndDate: latest.periodEndDate,
+            pairCount: latest.pairCount,
+            pairExecutedCount: latest.pairExecutedCount,
+            metricTotal: latest.metricTotal,
+            failMetricCount: latest.failMetricCount,
+            passedMetricCount: Math.max(0, latest.metricTotal - latest.failMetricCount),
+            createdAt: latest.createdAt
+          },
+    inFlight: isAutomationRunning(),
+    defaultPeriodStartDate: period.periodStartDate,
+    defaultPeriodEndDate: period.periodEndDate
+  };
 }
 
 export async function getAutomationRunById(id: string): Promise<AutomationRunRow> {

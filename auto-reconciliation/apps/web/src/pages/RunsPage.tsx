@@ -165,7 +165,7 @@ export function RunsPage() {
                       <Td>
                         <div>{item.packName}</div>
                         {isAdvanced ? (
-                          <div className="font-mono text-[11px] text-slate-400">
+                          <div className="font-mono text-xs text-slate-400">
                             {item.packCode}
                           </div>
                         ) : null}

@@ -183,7 +183,7 @@ export function RunDetailPage() {
                       <Td>
                         <div>{metric.metricName}</div>
                         {isAdvanced ? (
-                          <div className="font-mono text-[11px] text-slate-400">
+                          <div className="font-mono text-xs text-slate-400">
                             {metric.metricCode}
                           </div>
                         ) : null}
@@ -254,7 +254,7 @@ export function RunDetailPage() {
                           {diff.businessKeyText}
                         </Td>
                         {isAdvanced ? (
-                          <Td className="font-mono text-[11px]">{diff.fieldCode ?? "-"}</Td>
+                          <Td className="font-mono text-xs">{diff.fieldCode ?? "-"}</Td>
                         ) : null}
                         <Td className="text-xs">{diffTypeLabel(diff.diffType)}</Td>
                         <Td className="text-right font-mono text-xs">

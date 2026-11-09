@@ -57,19 +57,3 @@ export async function syncDataset(input: {
   return body.data;
 }
 
-export async function downloadAdjustments(ids: string[]): Promise<void> {
-  const url = `${apiBase}/api/reconciliation/adjustments/export?ids=${encodeURIComponent(
-    ids.join(",")
-  )}`;
-  const response = await fetch(url, { headers: { "x-actor": "user:web" } });
-  if (!response.ok) {
-    throw new Error(`导出失败（HTTP ${response.status}）`);
-  }
-  const blob = await response.blob();
-  const href = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = href;
-  anchor.download = "adjustments.csv";
-  anchor.click();
-  URL.revokeObjectURL(href);
-}

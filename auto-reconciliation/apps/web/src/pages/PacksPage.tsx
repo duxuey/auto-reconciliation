@@ -179,11 +179,11 @@ function ComparisonSection({
             <span className="text-sm font-medium text-slate-800">
               {comparison.name ?? comparison.code}
             </span>
-            <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-500">
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-500">
               {comparison.code}
             </span>
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
             <span>
               左：
               <span className="font-mono text-slate-600">
@@ -275,7 +275,7 @@ function ComparisonSection({
         </tbody>
       </Table>
 
-      <details className="border-t border-slate-100 px-3 py-2 text-[11px] text-slate-500">
+      <details className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
         <summary className="cursor-pointer select-none hover:text-slate-700">
           业务键与比对说明
         </summary>
@@ -679,7 +679,7 @@ function MetricSqlDialog({
             className="font-mono text-xs"
           />
         </Field>
-        <div className="mt-1 text-right text-[11px] tabular-nums text-slate-400">
+        <div className="mt-1 text-right text-xs tabular-nums text-slate-400">
           {sql.length} / {METRIC_SQL_MAX_LENGTH}
         </div>
 
@@ -851,21 +851,21 @@ function PackPanel({ pack }: { pack: Pack }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-semibold text-slate-900">{pack.packName}</span>
-            <span className="font-mono text-[11px] text-slate-400">{pack.packCode}</span>
+            <span className="font-mono text-xs text-slate-400">{pack.packCode}</span>
             <Badge tone="info">{labelOf(CHECK_STAGE_LABELS, pack.checkStage)}</Badge>
             <ResultBadge
               result={pack.packStatus}
               label={labelOf(PACK_STATUS_LABELS, pack.packStatus)}
             />
-            <span className="text-[11px] text-slate-500">{versionLabel}</span>
+            <span className="text-xs text-slate-500">{versionLabel}</span>
             {config === null ? null : (
-              <span className="text-[11px] text-slate-500">
+              <span className="text-xs text-slate-500">
                 · {config.comparisons.length} 组比对 · {countMetrics(config)} 个指标
               </span>
             )}
           </div>
           {pack.description === null || pack.description === "" ? null : (
-            <div className="mt-1 line-clamp-2 text-[11px] text-slate-500">
+            <div className="mt-1 line-clamp-2 text-xs text-slate-500">
               {pack.description}
             </div>
           )}
@@ -890,7 +890,7 @@ function PackPanel({ pack }: { pack: Pack }) {
             ) : (
               <div className="space-y-3">
                 {currentVersion.versionStatus !== "PUBLISHED" ? (
-                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
                     当前展示的是草稿版本 v{currentVersion.versionNo}，尚未发布；执行不会使用该配置。
                   </div>
                 ) : null}
@@ -1015,7 +1015,7 @@ function PackPanel({ pack }: { pack: Pack }) {
                         <Td>
                           v{version.versionNo}
                           {version.id === pack.currentVersionId ? (
-                            <span className="ml-2 text-[11px] text-blue-600">当前</span>
+                            <span className="ml-2 text-xs text-blue-600">当前</span>
                           ) : null}
                         </Td>
                         <Td>
@@ -1083,7 +1083,7 @@ function PackPanel({ pack }: { pack: Pack }) {
             <DialogTitle>指标包规则配置</DialogTitle>
             <DialogDescription>版本配置为不可变快照，发布后用于复现指标结果</DialogDescription>
           </DialogHeader>
-          <pre className="whitespace-pre-wrap rounded-md bg-slate-950 p-4 text-[11px] leading-5 text-slate-100">
+          <pre className="whitespace-pre-wrap rounded-md bg-slate-950 p-4 text-xs leading-5 text-slate-100">
             {JSON.stringify(configPreview, null, 2)}
           </pre>
         </DialogContent>
@@ -1199,7 +1199,7 @@ export function PacksPage() {
                     <CardTitle>
                       {group.pair?.pairName ?? "未绑定对账关系"}
                     </CardTitle>
-                    <div className="mt-1 text-[11px] text-slate-500">
+                    <div className="mt-1 text-xs text-slate-500">
                       {group.pair === undefined
                         ? "指标包未关联对账关系"
                         : `${group.pair.leftSystemName} → ${group.pair.rightSystemName}`}

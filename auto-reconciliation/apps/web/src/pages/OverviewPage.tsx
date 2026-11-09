@@ -74,13 +74,13 @@ export function OverviewPage() {
                         <Td>
                           <div className="font-medium text-slate-900">{pack.packName}</div>
                           {isAdvanced ? (
-                            <div className="font-mono text-[11px] text-slate-400">
+                            <div className="font-mono text-xs text-slate-400">
                               {pack.packCode}
                             </div>
                           ) : null}
                         </Td>
                         <Td>
-                          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">
+                          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
                             {labelOf(CHECK_STAGE_LABELS, pack.checkStage)}
                           </span>
                         </Td>

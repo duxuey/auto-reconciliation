@@ -6,12 +6,10 @@ import { PacksPage } from "./pages/PacksPage";
 import { DatasetsPage } from "./pages/DatasetsPage";
 import { RunsPage } from "./pages/RunsPage";
 import { RunDetailPage } from "./pages/RunDetailPage";
-import { DiffsPage } from "./pages/DiffsPage";
-import { AdjustmentsPage } from "./pages/AdjustmentsPage";
-import { GatesPage } from "./pages/GatesPage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { AutomationPage } from "./pages/AutomationPage";
+import { AutomationSettingsPage } from "./pages/AutomationSettingsPage";
 
 export function App() {
   return (
@@ -21,15 +19,12 @@ export function App() {
         <Route path="overview" element={<OverviewPage />} />
         <Route path="runs" element={<RunsPage />} />
         <Route path="runs/:id" element={<RunDetailPage />} />
-        <Route path="diffs" element={<DiffsPage />} />
-        <Route path="adjustments" element={<AdjustmentsPage />} />
-        <Route path="gates" element={<GatesPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="automation" element={<AutomationPage />} />
         <Route path="advanced/packs" element={<PacksPage />} />
         <Route path="advanced/datasets" element={<DatasetsPage />} />
         <Route path="advanced/settings" element={<SettingsPage />} />
-        <Route path="advanced/automation" element={<Navigate to="/automation" replace />} />
+        <Route path="advanced/automation" element={<AutomationSettingsPage />} />
         <Route path="packs" element={<Navigate to="/advanced/packs" replace />} />
         <Route path="datasets" element={<Navigate to="/advanced/datasets" replace />} />
         <Route path="settings" element={<Navigate to="/advanced/settings" replace />} />
