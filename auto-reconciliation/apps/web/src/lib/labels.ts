@@ -143,7 +143,7 @@ export const AUTOMATION_TRIGGER_LABELS: Record<string, string> = {
 
 export const AUTOMATION_CHANNEL_LABELS: Record<string, string> = {
   WEBHOOK: "企业微信群机器人（发到群）",
-  ROBOT: "飞书/钉钉机器人（发到群并 @成员）",
+  ROBOT: "飞书 / 钉钉群机器人",
   APP: "企业应用私聊（指定成员）",
   BOTH: "企业微信群机器人 + 应用私聊"
 };
