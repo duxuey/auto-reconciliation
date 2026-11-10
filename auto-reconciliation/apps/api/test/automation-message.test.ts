@@ -72,11 +72,17 @@ describe("企业微信对账消息", () => {
       triggerType: "SCHEDULE"
     });
     expect(message).toContain("【自动对账】2026-11-06 执行结果");
-    expect(message).toContain("触发：定时");
-    expect(message).toContain("期间：2026-11-06");
-    expect(message).toContain("对账关系：1 已执行 / 0 源库期间内无数据 / 0 失败");
-    expect(message).toContain("指标：共 3 项，未通过 1 项；差异 5 条");
-    expect(message).toContain("再保↔收付：1 批次 / 未通过 1 / 差异 5");
+    expect(message).toContain("执行状态：成功");
+    expect(message).toContain("触发方式：定时");
+    expect(message).toContain("对账期间：2026-11-06");
+    expect(message).toContain("执行概况");
+    expect(message).toContain(
+      "对账关系：共 1 个，已执行 1 个，无数据 0 个，失败 0 个"
+    );
+    expect(message).toContain("指标结果：共 3 项，未通过 1 项");
+    expect(message).toContain("差异笔数：5 条");
+    expect(message).toContain("再保↔收付：未通过 1 项，差异 5 条");
+    expect(message).not.toContain("批次");
   });
 
   it("纯文本版去掉 Markdown 加粗标记", () => {
@@ -86,7 +92,7 @@ describe("企业微信对账消息", () => {
     });
     expect(message.startsWith("【自动对账】")).toBe(true);
     expect(message).not.toContain("**");
-    expect(message).toContain("触发：手动");
+    expect(message).toContain("触发方式：手动");
   });
 
   it("无启用关系时给出明确说明", () => {
@@ -104,7 +110,7 @@ describe("企业微信对账消息", () => {
       { format: "markdown", triggerType: "CATCH_UP" }
     );
     expect(message).toContain("本次没有启用的对账关系");
-    expect(message).toContain("触发：启动补跑");
+    expect(message).toContain("触发方式：启动补跑");
   });
 
   it("无就绪数据与失败关系分别标注原因", () => {
@@ -126,9 +132,9 @@ describe("企业微信对账消息", () => {
       { businessDate: "2026-11-07", periodStartDate: "2026-10-01", periodEndDate: "2026-10-31" },
       { format: "markdown", triggerType: "SCHEDULE" }
     );
-    expect(message).toContain("期间：2026-10-01 ~ 2026-10-31");
+    expect(message).toContain("对账期间：2026-10-01 ~ 2026-10-31");
     expect(message).toContain("车承保↔车理赔：源库期间内无数据");
-    expect(message).toContain("非车理赔↔再保：失败");
+    expect(message).toContain("非车理赔↔再保：执行失败");
     expect(message).toContain("缺少已发布版本");
   });
 
@@ -145,7 +151,7 @@ describe("企业微信对账消息", () => {
       format: "markdown",
       triggerType: "SCHEDULE"
     });
-    expect(message).toContain("未通过指标（前 5）：");
+    expect(message).toContain("未通过指标（前 5）");
     expect(message).toContain("指标 0");
     expect(message).toContain("指标 4");
     expect(message).not.toContain("指标 5");

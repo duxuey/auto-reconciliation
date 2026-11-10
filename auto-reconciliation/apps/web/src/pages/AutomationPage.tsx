@@ -34,6 +34,33 @@ import {
 } from "../lib/labels";
 import { trpc } from "../lib/trpc";
 
+function MessagePreview({ text }: { text: string }) {
+  return (
+    <div className="max-h-80 overflow-auto rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-6 text-slate-700">
+      {text.split("\n").map((line, index) => {
+        const heading = /^\*\*(.+)\*\*$/.exec(line);
+        if (heading) {
+          return (
+            <div
+              key={index}
+              className="mt-2 font-semibold text-slate-900 first:mt-0"
+            >
+              {heading[1]}
+            </div>
+          );
+        }
+        return line === "" ? (
+          <div key={index} className="h-2" aria-hidden="true" />
+        ) : (
+          <div key={index} className="whitespace-pre-wrap">
+            {line}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 interface SummaryPairView {
   pairId: string;
   pairCode: string;
@@ -601,9 +628,7 @@ export function AutomationPage() {
                       <div className="mb-2 text-xs font-medium text-slate-600">
                         已生成的通知内容
                       </div>
-                      <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-700">
-                        {detail.messageText}
-                      </pre>
+                      <MessagePreview text={detail.messageText} />
                     </div>
                   )}
                 </>

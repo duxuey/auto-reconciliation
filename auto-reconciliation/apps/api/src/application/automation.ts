@@ -751,67 +751,69 @@ export function buildAutomationMessage(
   options: { format: "markdown" | "text"; triggerType: AutomationTriggerType }
 ): string {
   const markdown = options.format === "markdown";
+  const heading = (label: string): string => (markdown ? `**${label}**` : label);
   const statusLabel =
     summary.pairFailedCount > 0
       ? "失败"
       : summary.pairs.some((pair) => pair.status === "PARTIAL")
         ? "部分失败"
         : "成功";
+  const periodLabel =
+    period.periodStartDate === period.periodEndDate
+      ? period.periodStartDate
+      : `${period.periodStartDate} ~ ${period.periodEndDate}`;
   const lines: string[] = [];
+  lines.push(heading(`【自动对账】${period.periodStartDate} 执行结果`));
+  lines.push(`执行状态：${statusLabel}`);
+  lines.push(`触发方式：${TRIGGER_LABELS[options.triggerType]}`);
+  lines.push(`对账期间：${periodLabel}`);
+  lines.push("");
+  lines.push(heading("执行概况"));
   lines.push(
-    markdown
-      ? `**【自动对账】${period.periodStartDate} 执行结果**`
-      : `【自动对账】${period.periodStartDate} 执行结果`
-  );
-  lines.push(`状态：${statusLabel}`);
-  lines.push(`触发：${TRIGGER_LABELS[options.triggerType]}`);
-  lines.push(
-    `期间：${
-      period.periodStartDate === period.periodEndDate
-        ? period.periodStartDate
-        : `${period.periodStartDate} ~ ${period.periodEndDate}`
-    }`
+    `对账关系：共 ${summary.pairCount} 个，已执行 ${summary.pairExecutedCount} 个，无数据 ${summary.pairNoDataCount} 个，失败 ${summary.pairFailedCount} 个`
   );
   lines.push(
-    `对账关系：${summary.pairExecutedCount} 已执行 / ${summary.pairNoDataCount} 源库期间内无数据 / ${summary.pairFailedCount} 失败`
+    `指标结果：共 ${summary.metricTotal} 项，未通过 ${summary.failMetricCount} 项`
   );
-  lines.push(
-    `批次：${summary.batchCount} 个（成功 ${summary.batchSucceededCount} / 失败 ${summary.batchFailedCount}），复用 ${summary.batchReusedCount}`
-  );
-  lines.push(
-    `指标：共 ${summary.metricTotal} 项，未通过 ${summary.failMetricCount} 项；差异 ${summary.diffCount} 条`
-  );
+  lines.push(`差异笔数：${summary.diffCount} 条`);
   lines.push("");
 
   if (summary.pairs.length === 0) {
     lines.push("本次没有启用的对账关系。");
   } else {
+    lines.push(heading("对账关系结果"));
     for (const pair of summary.pairs.slice(0, 10)) {
       if (pair.status === "NO_DATA") {
         lines.push(`- ${pair.pairName}：源库期间内无数据`);
       } else if (pair.status === "FAILED") {
         lines.push(
-          `- ${pair.pairName}：失败（${truncate(
+          `- ${pair.pairName}：执行失败（${truncate(
             pair.failedPacks[0]?.message ?? "执行异常",
             80
           )}）`
         );
+      } else if (pair.failMetricCount === 0 && pair.diffCount === 0) {
+        lines.push(
+          `- ${pair.pairName}：指标全部通过${
+            pair.status === "PARTIAL" ? "（部分失败）" : ""
+          }`
+        );
       } else {
         lines.push(
-          `- ${pair.pairName}：${pair.runs.length} 批次 / 未通过 ${pair.failMetricCount} / 差异 ${pair.diffCount}${
+          `- ${pair.pairName}：未通过 ${pair.failMetricCount} 项，差异 ${pair.diffCount} 条${
             pair.status === "PARTIAL" ? "（部分失败）" : ""
           }`
         );
       }
     }
     if (summary.pairs.length > 10) {
-      lines.push(`- …等 ${summary.pairs.length} 个对账关系`);
+      lines.push(`- 其余 ${summary.pairs.length - 10} 个对账关系请在系统中查看`);
     }
   }
 
   if (summary.failedMetrics.length > 0) {
     lines.push("");
-    lines.push("未通过指标（前 5）：");
+    lines.push(heading("未通过指标（前 5）"));
     for (const metric of summary.failedMetrics.slice(0, 5)) {
       lines.push(
         `- ${metric.packName} / ${metric.metricName}：失败 ${metric.failCount} 条`
