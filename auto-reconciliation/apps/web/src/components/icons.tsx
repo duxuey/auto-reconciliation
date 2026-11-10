@@ -35,6 +35,19 @@ export function IconWorkbench(props: IconProps) {
   );
 }
 
+/** 自动对账工作台标识：仪表盘面板 + 校验徽标 */
+export function IconReconWorkbench(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="2.75" y="3.75" width="18.5" height="16.5" rx="4" />
+      <path d="M7.25 8.5h5.5" />
+      <path d="M7.25 12h3.5" />
+      <circle cx="16.25" cy="14.75" r="3.4" />
+      <path d="m14.9 14.8 1 1 1.8-2" />
+    </Svg>
+  );
+}
+
 export function IconRuns(props: IconProps) {
   return (
     <Svg {...props}>

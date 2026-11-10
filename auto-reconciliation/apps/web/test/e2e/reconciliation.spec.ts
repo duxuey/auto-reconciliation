@@ -63,6 +63,11 @@ test.describe("对账工作台（业务模式）", () => {
     await selectPair(page, RP_PAIR_LABEL);
     await page.getByRole("link", { name: "执行记录", exact: true }).click();
     await expect(page.getByRole("heading", { name: "执行记录" })).toBeVisible();
+    await expect(
+      page.getByText("自动对账工作台", { exact: true })
+    ).toBeVisible();
+    await expect(page.getByText("合约账 / 临分账自动对账")).toHaveCount(0);
+    await expect(page.locator("header select")).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "执行历史" })).toBeVisible();
     await expect(
       page.getByRole("columnheader", { name: "执行时间" })
@@ -91,7 +96,7 @@ test.describe("对账工作台（业务模式）", () => {
     }, currentPair);
     expect(otherPair).not.toBe("");
     await pairFilter.selectOption(otherPair);
-    await expect(page.locator("header select").nth(1)).toHaveValue(otherPair);
+    await expect(page.locator("header select")).toHaveCount(0);
     await expect(page.getByLabel("指标包")).toHaveValue("");
   });
 

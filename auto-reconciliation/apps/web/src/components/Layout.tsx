@@ -1,11 +1,12 @@
 import type { ComponentType, SVGProps } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { cn } from "../lib/cn";
 import { useScope } from "../lib/scope";
 import {
   IconAutomation,
   IconOverview,
   IconPack,
+  IconReconWorkbench,
   IconRuns,
   IconSettings,
   IconSliders,
@@ -73,6 +74,8 @@ function NavItems({ items }: { items: NavItem[] }) {
 }
 
 export function Layout() {
+  const location = useLocation();
+  const isRunsPage = location.pathname === "/runs";
   const {
     environments,
     environmentId,
@@ -136,18 +139,40 @@ export function Layout() {
       </aside>
       <main className="min-w-0 flex-1">
         <header className="flex h-16 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/90 px-6 shadow-card backdrop-blur">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 truncate text-sm font-semibold text-slate-800">
-              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-              合约账 / 临分账自动对账
+          {isRunsPage ? (
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25 ring-1 ring-inset ring-white/20">
+                <IconReconWorkbench className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="truncate text-base font-semibold tracking-tight text-slate-900">
+                  自动对账工作台
+                </div>
+                <div className="truncate text-xs text-slate-500">
+                  对账执行记录与结果查询
+                </div>
+              </div>
             </div>
-            <div className="mt-0.5 truncate text-xs text-slate-500">
-              {isAdvanced
-                ? `${environments.find((item) => item.id === environmentId)?.envName ?? "未选择环境"} · ${pair?.pairName ?? "未选择对账关系"}`
-                : `${businessEnvironment?.envName ?? "未设置默认环境"} · ${pair?.pairName ?? "请在对账工作台选择对账关系"}`}
+          ) : (
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 truncate text-sm font-semibold text-slate-800">
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                合约账 / 临分账自动对账
+              </div>
+              <div className="mt-0.5 truncate text-xs text-slate-500">
+                {isAdvanced
+                  ? `${environments.find((item) => item.id === environmentId)?.envName ?? "未选择环境"} · ${pair?.pairName ?? "未选择对账关系"}`
+                  : `${businessEnvironment?.envName ?? "未设置默认环境"} · ${pair?.pairName ?? "请在对账工作台选择对账关系"}`}
+              </div>
             </div>
-          </div>
-          {isAdvanced ? (
+          )}
+          {isRunsPage ? (
+            isAdvanced ? null : (
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-100">
+                业务模式
+              </span>
+            )
+          ) : isAdvanced ? (
             <div className="flex shrink-0 items-center gap-2">
               <label className="flex items-center gap-1.5 text-xs text-slate-500">
                 环境
