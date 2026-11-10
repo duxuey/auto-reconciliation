@@ -9,8 +9,8 @@ import { Field, Input, Select } from "../components/ui/input";
 import { EmptyRow, Table, Td, Th } from "../components/ui/table";
 import { useToast } from "../components/ui/toast";
 import { friendlyError } from "../lib/errors";
-import { formatDate } from "../lib/format";
-import { RUN_MODE_LABELS } from "../lib/labels";
+import { formatDate, formatDuration } from "../lib/format";
+import { RUN_MODE_LABELS, labelOf } from "../lib/labels";
 import { usePageFilters } from "../lib/pageFilters";
 import { useScope } from "../lib/scope";
 import { trpc } from "../lib/trpc";
@@ -26,8 +26,7 @@ export function RunsPage() {
     {
       limit: 50,
       environmentId,
-      pairId,
-      ...period
+      pairId
     },
     { enabled: pairId !== undefined }
   );
@@ -65,7 +64,7 @@ export function RunsPage() {
     <div>
       <PageHeader
         title="执行记录"
-        description={`${pair?.pairName ?? "当前对账关系"} · ${period.periodStartDate} 至 ${period.periodEndDate}；查看历次对账批次与结果`}
+        description={`${pair?.pairName ?? "当前对账关系"}；查看全部历史执行，点击批次号查看指标结果与差异`}
       />
 
       {isAdvanced ? (
@@ -132,7 +131,7 @@ export function RunsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>执行批次</CardTitle>
+          <CardTitle>执行历史</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <QueryState isLoading={runs.isLoading} error={runs.error}>
@@ -145,12 +144,12 @@ export function RunsPage() {
                   <Th>状态</Th>
                   <Th>指标数</Th>
                   <Th>未通过</Th>
-                  <Th>创建时间</Th>
+                  <Th>执行时间</Th>
                 </tr>
               </thead>
               <tbody>
                 {(runs.data ?? []).length === 0 ? (
-                  <EmptyRow colSpan={7}>本期间暂无执行批次</EmptyRow>
+                  <EmptyRow colSpan={7}>暂无执行记录</EmptyRow>
                 ) : (
                   (runs.data ?? []).map((item) => (
                     <tr key={item.run.id} className="hover:bg-slate-50">
@@ -161,6 +160,9 @@ export function RunsPage() {
                         >
                           {item.run.runNo}
                         </Link>
+                        <div className="mt-0.5 text-2xs text-slate-400">
+                          {labelOf(RUN_MODE_LABELS, item.run.runMode)}
+                        </div>
                       </Td>
                       <Td>
                         <div>{item.packName}</div>
@@ -181,7 +183,12 @@ export function RunsPage() {
                         {item.run.failMetricCount}
                       </Td>
                       <Td className="text-xs text-slate-500">
-                        {formatDate(item.run.createdAt)}
+                        <div>
+                          {formatDate(item.run.startedAt ?? item.run.createdAt)}
+                        </div>
+                        <div className="mt-0.5 text-2xs text-slate-400">
+                          耗时 {formatDuration(item.run.startedAt, item.run.finishedAt)}
+                        </div>
                       </Td>
                     </tr>
                   ))

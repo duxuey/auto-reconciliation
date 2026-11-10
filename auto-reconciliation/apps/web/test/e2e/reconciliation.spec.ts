@@ -63,6 +63,10 @@ test.describe("对账工作台（业务模式）", () => {
     await selectPair(page, RP_PAIR_LABEL);
     await page.getByRole("link", { name: "执行记录", exact: true }).click();
     await expect(page.getByRole("heading", { name: "执行记录" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "执行历史" })).toBeVisible();
+    await expect(
+      page.getByRole("columnheader", { name: "执行时间" })
+    ).toBeVisible();
     await expect(
       page.getByRole("row").filter({ hasText: "再保送收付↔收付账单" }).first()
     ).toBeVisible();
@@ -141,6 +145,27 @@ test.describe("高级设置", () => {
       page.getByText(/按系统间对账关系查看指标包与指标明细/)
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "+ 新增指标" }).first()).toBeVisible();
+  });
+
+  test("运营总览聚焦指标包健康与差异风险", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("checkbox").check();
+    await page.getByRole("link", { name: "运营总览" }).click();
+    await expect(page).toHaveURL(/\/overview$/);
+    await expect(page.getByRole("heading", { name: "对账总览" })).toBeVisible();
+    await expect(page.getByText("超期差异", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "指标包健康状态" })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("columnheader", { name: "最近执行结果" })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("columnheader", { name: "最新批次" })
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("columnheader", { name: "指标数" })
+    ).toHaveCount(0);
   });
 
   test("自动对账配置独立位于高级设置", async ({ page }) => {

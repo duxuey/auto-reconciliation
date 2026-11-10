@@ -37,6 +37,34 @@ export function absMoneyString(value: string | null | undefined): string {
   return value.startsWith("-") ? value.slice(1) : value;
 }
 
+/** 执行耗时展示：仅用于界面呈现，不参与业务计算 */
+export function formatDuration(
+  startedAt: string | Date | null | undefined,
+  finishedAt: string | Date | null | undefined
+): string {
+  if (startedAt === null || startedAt === undefined || startedAt === "") {
+    return "-";
+  }
+  if (finishedAt === null || finishedAt === undefined || finishedAt === "") {
+    return "-";
+  }
+  const start = new Date(startedAt).getTime();
+  const end = new Date(finishedAt).getTime();
+  if (Number.isNaN(start) || Number.isNaN(end) || end < start) {
+    return "-";
+  }
+  const milliseconds = end - start;
+  if (milliseconds < 1000) {
+    return `${milliseconds} 毫秒`;
+  }
+  if (milliseconds < 60000) {
+    return `${(milliseconds / 1000).toFixed(1)} 秒`;
+  }
+  const minutes = Math.floor(milliseconds / 60000);
+  const seconds = Math.round((milliseconds % 60000) / 1000);
+  return `${minutes} 分 ${seconds} 秒`;
+}
+
 export function formatCount(value: number | null | undefined): string {
   if (value === null || value === undefined) {
     return "-";
