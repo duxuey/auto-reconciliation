@@ -3,10 +3,8 @@ import { Layout } from "./components/Layout";
 import { WorkbenchPage } from "./pages/WorkbenchPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PacksPage } from "./pages/PacksPage";
-import { DatasetsPage } from "./pages/DatasetsPage";
 import { RunsPage } from "./pages/RunsPage";
 import { RunDetailPage } from "./pages/RunDetailPage";
-import { ReportsPage } from "./pages/ReportsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { AutomationPage } from "./pages/AutomationPage";
 import { AutomationSettingsPage } from "./pages/AutomationSettingsPage";
@@ -19,14 +17,11 @@ export function App() {
         <Route path="overview" element={<OverviewPage />} />
         <Route path="runs" element={<RunsPage />} />
         <Route path="runs/:id" element={<RunDetailPage />} />
-        <Route path="reports" element={<ReportsPage />} />
         <Route path="automation" element={<AutomationPage />} />
         <Route path="advanced/packs" element={<PacksPage />} />
-        <Route path="advanced/datasets" element={<DatasetsPage />} />
         <Route path="advanced/settings" element={<SettingsPage />} />
         <Route path="advanced/automation" element={<AutomationSettingsPage />} />
         <Route path="packs" element={<Navigate to="/advanced/packs" replace />} />
-        <Route path="datasets" element={<Navigate to="/advanced/datasets" replace />} />
         <Route path="settings" element={<Navigate to="/advanced/settings" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

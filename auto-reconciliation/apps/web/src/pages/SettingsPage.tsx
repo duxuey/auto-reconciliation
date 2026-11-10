@@ -47,13 +47,9 @@ interface SchemaDraft {
 
 export function SettingsPage() {
   const utils = trpc.useUtils();
-  const { environments, environmentId, environment } = useScope();
+  const { environments } = useScope();
   const systems = trpc.system.list.useQuery();
   const pairs = trpc.pair.list.useQuery();
-  const envSystems = trpc.environment.systems.useQuery(
-    { id: environmentId ?? "" },
-    { enabled: environmentId !== undefined }
-  );
 
   const [message, setMessage] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -67,9 +63,14 @@ export function SettingsPage() {
   });
 
   const [editingEnv, setEditingEnv] = useState<EnvironmentEditState | null>(null);
+  const envSystems = trpc.environment.systems.useQuery(
+    { id: editingEnv?.id ?? "" },
+    { enabled: editingEnv !== null }
+  );
   const [editError, setEditError] = useState<string | null>(null);
   const [schemaDraft, setSchemaDraft] = useState<SchemaDraft | null>(null);
   const [schemaError, setSchemaError] = useState<string | null>(null);
+  const [schemaNotice, setSchemaNotice] = useState<string | null>(null);
   const [deletingEnv, setDeletingEnv] = useState<EnvironmentOption | null>(null);
   const [deletingSystem, setDeletingSystem] = useState<{
     id: string;
@@ -78,9 +79,10 @@ export function SettingsPage() {
   } | null>(null);
 
   const createEnvironment = trpc.environment.create.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (created) => {
+      const createdCode = form.envCode;
       await utils.environment.list.invalidate();
-      setMessage(`环境 ${form.envCode} 已创建`);
+      setMessage(`环境 ${createdCode} 已创建，可继续配置系统 schema`);
       setForm({
         envCode: "",
         envName: "",
@@ -90,6 +92,7 @@ export function SettingsPage() {
         dbPasswordEnvKey: "LEGACY_MYSQL_PASSWORD",
         defaultDatabase: ""
       });
+      startEditEnvironment(created);
     },
     onError: (error) => setMessage(error.message)
   });
@@ -101,6 +104,8 @@ export function SettingsPage() {
         utils.workbench.readiness.invalidate()
       ]);
       setEditingEnv(null);
+      setSchemaDraft(null);
+      setSchemaNotice(null);
       setMessage("环境配置已保存");
     },
     onError: (error) => {
@@ -121,7 +126,8 @@ export function SettingsPage() {
         utils.workbench.readiness.invalidate()
       ]);
       setSchemaDraft(null);
-      setMessage("环境系统 schema 已保存");
+      setSchemaError(null);
+      setSchemaNotice("系统 schema 已保存");
     },
     onError: (error) => setSchemaError(error.message)
   });
@@ -159,6 +165,9 @@ export function SettingsPage() {
 
   function startEditEnvironment(item: EnvironmentOption): void {
     setEditError(null);
+    setSchemaDraft(null);
+    setSchemaError(null);
+    setSchemaNotice(null);
     setEditingEnv({
       id: item.id,
       envCode: item.envCode,
@@ -207,8 +216,7 @@ export function SettingsPage() {
   }
 
   function openSchemaEditor(systemCode?: string): void {
-    if (environmentId === undefined) {
-      setMessage("请先在页面顶部选择环境");
+    if (editingEnv === null) {
       return;
     }
     const configured = envSystems.data ?? [];
@@ -228,8 +236,9 @@ export function SettingsPage() {
         ? [{ key: "DEFAULT", value: "" }]
         : Object.entries(existing.schemaMap).map(([key, value]) => ({ key, value }));
     setSchemaError(null);
+    setSchemaNotice(null);
     setSchemaDraft({
-      environmentId,
+      environmentId: editingEnv.id,
       systemCode: targetCode ?? "",
       connectionLimit: String(existing?.connectionLimit ?? 5),
       entries: entries.length === 0 ? [{ key: "DEFAULT", value: "" }] : entries,
@@ -312,7 +321,7 @@ export function SettingsPage() {
     <div>
       <PageHeader
         title="环境与系统配置"
-        description="环境连接信息存于数据库，密码只保存环境变量名；已保存的环境与 schema 映射可直接修改"
+        description="环境连接信息存于数据库，密码只保存环境变量名；系统 schema 在新增或修改环境时一并维护"
       />
 
       {message === null ? null : (
@@ -320,6 +329,75 @@ export function SettingsPage() {
           {message}
         </div>
       )}
+
+      <Card className="mb-4">
+        <CardHeader>
+          <CardTitle>新增环境</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            <Field label="环境编码">
+              <Input
+                value={form.envCode}
+                placeholder="UAT"
+                onChange={(event) =>
+                  setForm({ ...form, envCode: event.target.value.toUpperCase() })
+                }
+              />
+            </Field>
+            <Field label="环境名称">
+              <Input
+                value={form.envName}
+                placeholder="验收环境"
+                onChange={(event) => setForm({ ...form, envName: event.target.value })}
+              />
+            </Field>
+            <Field label="主机">
+              <Input
+                value={form.dbHost}
+                onChange={(event) => setForm({ ...form, dbHost: event.target.value })}
+              />
+            </Field>
+            <Field label="端口">
+              <Input
+                value={form.dbPort}
+                onChange={(event) => setForm({ ...form, dbPort: event.target.value })}
+              />
+            </Field>
+            <Field label="数据库账号">
+              <Input
+                value={form.dbUser}
+                onChange={(event) => setForm({ ...form, dbUser: event.target.value })}
+              />
+            </Field>
+            <Field label="密码环境变量名" hint="填写环境变量名，如 SIT_MYSQL_PASSWORD；实际密码在 .env 中配置">
+              <Input
+                value={form.dbPasswordEnvKey}
+                onChange={(event) =>
+                  setForm({ ...form, dbPasswordEnvKey: event.target.value })
+                }
+              />
+            </Field>
+            <Field label="默认库（可空）">
+              <Input
+                value={form.defaultDatabase}
+                onChange={(event) => setForm({ ...form, defaultDatabase: event.target.value })}
+              />
+            </Field>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-slate-500">
+              创建后自动打开编辑面板，可继续维护该环境的系统 schema。
+            </p>
+            <Button
+              disabled={createEnvironment.isPending}
+              onClick={submitCreateEnvironment}
+            >
+              {createEnvironment.isPending ? "创建中…" : "创建环境"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="mb-4">
         <CardHeader>
@@ -429,147 +507,6 @@ export function SettingsPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>新增环境</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-2">
-              <Field label="环境编码">
-                <Input
-                  value={form.envCode}
-                  placeholder="UAT"
-                  onChange={(event) =>
-                    setForm({ ...form, envCode: event.target.value.toUpperCase() })
-                  }
-                />
-              </Field>
-              <Field label="环境名称">
-                <Input
-                  value={form.envName}
-                  placeholder="验收环境"
-                  onChange={(event) => setForm({ ...form, envName: event.target.value })}
-                />
-              </Field>
-              <Field label="主机">
-                <Input
-                  value={form.dbHost}
-                  onChange={(event) => setForm({ ...form, dbHost: event.target.value })}
-                />
-              </Field>
-              <Field label="端口">
-                <Input
-                  value={form.dbPort}
-                  onChange={(event) => setForm({ ...form, dbPort: event.target.value })}
-                />
-              </Field>
-              <Field label="数据库账号">
-                <Input
-                  value={form.dbUser}
-                  onChange={(event) => setForm({ ...form, dbUser: event.target.value })}
-                />
-              </Field>
-              <Field label="密码环境变量名" hint="填写环境变量名，如 SIT_MYSQL_PASSWORD；实际密码在 .env 中配置">
-                <Input
-                  value={form.dbPasswordEnvKey}
-                  onChange={(event) =>
-                    setForm({ ...form, dbPasswordEnvKey: event.target.value })
-                  }
-                />
-              </Field>
-            </div>
-            <Field label="默认库（可空）">
-              <Input
-                value={form.defaultDatabase}
-                onChange={(event) => setForm({ ...form, defaultDatabase: event.target.value })}
-              />
-            </Field>
-            <Button
-              disabled={createEnvironment.isPending}
-              onClick={submitCreateEnvironment}
-            >
-              {createEnvironment.isPending ? "创建中…" : "创建环境"}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>环境系统 schema（{environment?.envCode ?? "未选择"}）</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <QueryState isLoading={envSystems.isLoading} error={envSystems.error}>
-              <Table>
-                <thead>
-                  <tr>
-                    <Th>系统</Th>
-                    <Th>schema 映射</Th>
-                    <Th>连接数</Th>
-                    <Th>操作</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(envSystems.data ?? []).length === 0 ? (
-                    <EmptyRow colSpan={4}>该环境尚未配置系统</EmptyRow>
-                  ) : (
-                    (envSystems.data ?? []).map((item) => (
-                      <tr key={item.id}>
-                        <Td className="text-xs">
-                          <div className="font-mono">{item.systemCode}</div>
-                          <div className="text-slate-500">{item.systemName}</div>
-                        </Td>
-                        <Td className="font-mono text-xs">
-                          {Object.entries(item.schemaMap).map(([key, value]) => (
-                            <div key={key}>
-                              {key} → {value}
-                            </div>
-                          ))}
-                        </Td>
-                        <Td>{item.connectionLimit}</Td>
-                        <Td>
-                          <div className="flex flex-wrap gap-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openSchemaEditor(item.systemCode)}
-                            >
-                              编辑
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600 hover:bg-red-50"
-                              onClick={() =>
-                                setDeletingSystem({
-                                  id: item.id,
-                                  systemCode: item.systemCode,
-                                  systemName: item.systemName
-                                })
-                              }
-                            >
-                              删除
-                            </Button>
-                          </div>
-                        </Td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </Table>
-            </QueryState>
-
-            <Button
-              variant="outline"
-              disabled={environmentId === undefined || (systems.data ?? []).length === 0}
-              onClick={() => openSchemaEditor()}
-            >
-              配置系统 schema
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
       <Card className="mt-4">
         <CardHeader>
           <CardTitle>对账关系</CardTitle>
@@ -625,7 +562,7 @@ export function SettingsPage() {
           <DialogHeader>
             <DialogTitle>编辑环境 {editingEnv?.envCode ?? ""}</DialogTitle>
             <DialogDescription>
-              环境编码创建后不可修改；密码仍只保存环境变量名，实际值由部署环境注入。
+              环境编码创建后不可修改；密码仍只保存环境变量名，实际值由部署环境注入。系统 schema 在下方维护。
             </DialogDescription>
           </DialogHeader>
           {editingEnv === null ? null : (
@@ -688,6 +625,212 @@ export function SettingsPage() {
                   }
                 />
               </Field>
+
+              <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/40 p-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-800">
+                      环境系统 schema
+                    </h3>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      数据集按 schemaKey 查找对应 schema，未命中时使用 DEFAULT；修改后立即影响直连源库解析。
+                    </p>
+                  </div>
+                  {schemaDraft === null ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={(systems.data ?? []).length === 0}
+                      onClick={() => openSchemaEditor()}
+                    >
+                      配置系统 schema
+                    </Button>
+                  ) : null}
+                </div>
+
+                {schemaNotice === null ? null : (
+                  <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                    {schemaNotice}
+                  </div>
+                )}
+
+                <QueryState isLoading={envSystems.isLoading} error={envSystems.error}>
+                  <Table>
+                    <thead>
+                      <tr>
+                        <Th>系统</Th>
+                        <Th>schema 映射</Th>
+                        <Th>连接数</Th>
+                        <Th>操作</Th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(envSystems.data ?? []).length === 0 ? (
+                        <EmptyRow colSpan={4}>该环境尚未配置系统</EmptyRow>
+                      ) : (
+                        (envSystems.data ?? []).map((item) => (
+                          <tr key={item.id}>
+                            <Td className="text-xs">
+                              <div className="font-mono">{item.systemCode}</div>
+                              <div className="text-slate-500">{item.systemName}</div>
+                            </Td>
+                            <Td className="font-mono text-xs">
+                              {Object.entries(item.schemaMap).map(([key, value]) => (
+                                <div key={key}>
+                                  {key} → {value}
+                                </div>
+                              ))}
+                            </Td>
+                            <Td>{item.connectionLimit}</Td>
+                            <Td>
+                              <div className="flex flex-wrap gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openSchemaEditor(item.systemCode)}
+                                >
+                                  编辑
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-600 hover:bg-red-50"
+                                  onClick={() =>
+                                    setDeletingSystem({
+                                      id: item.id,
+                                      systemCode: item.systemCode,
+                                      systemName: item.systemName
+                                    })
+                                  }
+                                >
+                                  删除
+                                </Button>
+                              </div>
+                            </Td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </Table>
+                </QueryState>
+
+                {schemaDraft === null ? null : (
+                  <div className="space-y-3 rounded-lg border border-blue-200 bg-white p-3">
+                    <div className="text-sm font-semibold text-slate-800">
+                      {schemaDraft.isNew
+                        ? "新增系统 schema"
+                        : `编辑系统 schema · ${schemaDraft.systemCode}`}
+                    </div>
+                    {schemaError === null ? null : (
+                      <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                        {schemaError}
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-2">
+                      <Field label="系统">
+                        <Select
+                          value={schemaDraft.systemCode}
+                          disabled={!schemaDraft.isNew}
+                          onChange={(event) =>
+                            setSchemaDraft({ ...schemaDraft, systemCode: event.target.value })
+                          }
+                        >
+                          {(systems.data ?? []).map((item) => (
+                            <option key={item.id} value={item.systemCode}>
+                              {item.systemCode} · {item.systemName}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                      <Field label="连接数">
+                        <Input
+                          value={schemaDraft.connectionLimit}
+                          onChange={(event) =>
+                            setSchemaDraft({
+                              ...schemaDraft,
+                              connectionLimit: event.target.value
+                            })
+                          }
+                        />
+                      </Field>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-slate-600">schema 映射</div>
+                      {schemaDraft.entries.map((entry, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <Input
+                            className="w-32"
+                            aria-label="schema 键"
+                            placeholder="DEFAULT"
+                            value={entry.key}
+                            onChange={(event) =>
+                              updateSchemaEntry(index, {
+                                key: event.target.value.toUpperCase()
+                              })
+                            }
+                          />
+                          <span className="text-xs text-slate-400">→</span>
+                          <Input
+                            aria-label="schema 名称"
+                            placeholder="fpic_clm_db"
+                            value={entry.value}
+                            onChange={(event) =>
+                              updateSchemaEntry(index, { value: event.target.value })
+                            }
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={schemaDraft.entries.length <= 1}
+                            onClick={() =>
+                              setSchemaDraft({
+                                ...schemaDraft,
+                                entries: schemaDraft.entries.filter(
+                                  (_, entryIndex) => entryIndex !== index
+                                )
+                              })
+                            }
+                          >
+                            删除
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setSchemaDraft({
+                            ...schemaDraft,
+                            entries: [...schemaDraft.entries, { key: "", value: "" }]
+                          })
+                        }
+                      >
+                        新增映射
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        disabled={upsertSystem.isPending}
+                        onClick={saveSchemaDraft}
+                      >
+                        {upsertSystem.isPending ? "保存中…" : "保存 schema"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSchemaDraft(null);
+                          setSchemaError(null);
+                        }}
+                      >
+                        取消
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-2 pt-2">
                 <Button disabled={updateEnvironment.isPending} onClick={saveEnvironment}>
                   {updateEnvironment.isPending ? "保存中…" : "保存修改"}
@@ -697,128 +840,6 @@ export function SettingsPage() {
                   onClick={() => {
                     setEditingEnv(null);
                     setEditError(null);
-                  }}
-                >
-                  取消
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={schemaDraft !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSchemaDraft(null);
-            setSchemaError(null);
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {schemaDraft?.isNew === true ? "新增系统 schema" : "编辑系统 schema"}
-              {environment === undefined ? "" : ` · ${environment.envCode}`}
-            </DialogTitle>
-            <DialogDescription>
-              数据集按 schemaKey 查找对应 schema，未命中时使用 DEFAULT；修改后立即影响直连源库解析。
-            </DialogDescription>
-          </DialogHeader>
-          {schemaDraft === null ? null : (
-            <div className="space-y-3">
-              {schemaError === null ? null : (
-                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                  {schemaError}
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-2">
-                <Field label="系统">
-                  <Select
-                    value={schemaDraft.systemCode}
-                    disabled={!schemaDraft.isNew}
-                    onChange={(event) =>
-                      setSchemaDraft({ ...schemaDraft, systemCode: event.target.value })
-                    }
-                  >
-                    {(systems.data ?? []).map((item) => (
-                      <option key={item.id} value={item.systemCode}>
-                        {item.systemCode} · {item.systemName}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field label="连接数">
-                  <Input
-                    value={schemaDraft.connectionLimit}
-                    onChange={(event) =>
-                      setSchemaDraft({ ...schemaDraft, connectionLimit: event.target.value })
-                    }
-                  />
-                </Field>
-              </div>
-              <div className="space-y-2">
-                <div className="text-xs font-medium text-slate-600">schema 映射</div>
-                {schemaDraft.entries.map((entry, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input
-                      className="w-32"
-                      aria-label="schema 键"
-                      placeholder="DEFAULT"
-                      value={entry.key}
-                      onChange={(event) =>
-                        updateSchemaEntry(index, { key: event.target.value.toUpperCase() })
-                      }
-                    />
-                    <span className="text-xs text-slate-400">→</span>
-                    <Input
-                      aria-label="schema 名称"
-                      placeholder="fpic_clm_db"
-                      value={entry.value}
-                      onChange={(event) =>
-                        updateSchemaEntry(index, { value: event.target.value })
-                      }
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={schemaDraft.entries.length <= 1}
-                      onClick={() =>
-                        setSchemaDraft({
-                          ...schemaDraft,
-                          entries: schemaDraft.entries.filter(
-                            (_, entryIndex) => entryIndex !== index
-                          )
-                        })
-                      }
-                    >
-                      删除
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setSchemaDraft({
-                      ...schemaDraft,
-                      entries: [...schemaDraft.entries, { key: "", value: "" }]
-                    })
-                  }
-                >
-                  新增映射
-                </Button>
-              </div>
-              <div className="flex gap-2 pt-2">
-                <Button disabled={upsertSystem.isPending} onClick={saveSchemaDraft}>
-                  {upsertSystem.isPending ? "保存中…" : "保存"}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSchemaDraft(null);
-                    setSchemaError(null);
                   }}
                 >
                   取消

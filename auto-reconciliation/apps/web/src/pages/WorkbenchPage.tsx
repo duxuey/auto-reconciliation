@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../components/PageHeader";
+import { ReportPanel } from "../components/ReportPanel";
 import {
   IconActivity,
   IconAlert,
@@ -25,7 +26,7 @@ import { cn } from "../lib/cn";
 import { friendlyError } from "../lib/errors";
 import { formatCount, formatDate } from "../lib/format";
 import { READINESS_STATUS_LABELS, labelOf } from "../lib/labels";
-import { currentMonthPeriod, periodFromSearch, periodQuery, type DatePeriod } from "../lib/period";
+import { currentMonthPeriod, periodFromSearch, type DatePeriod } from "../lib/period";
 import { useScope } from "../lib/scope";
 import { trpc } from "../lib/trpc";
 
@@ -474,7 +475,7 @@ function WorkbenchSteps({
       <StepCard
         index={4}
         title="执行进度与结果"
-        description="执行期间页面会自动刷新；完成后可查看结果与对账报表。"
+        description="执行期间页面会自动刷新；完成后可在下一步查看对账报表。"
         active={hasActiveRun}
       >
         <div className="mb-4 grid gap-3 md:grid-cols-4">
@@ -551,14 +552,20 @@ function WorkbenchSteps({
             </tbody>
           </Table>
         )}
-        <div className="mt-3">
-          <Link
-            className="text-sm font-medium text-blue-600 hover:underline"
-            to={`/reports?pairId=${pairId}&${periodQuery(period)}`}
-          >
-            查看对账报表
-          </Link>
-        </div>
+      </StepCard>
+
+      <StepCard
+        index={5}
+        title="对账报表"
+        description="汇总本期间的指标结果与差异账龄，可导出 CSV 留档。"
+        active={runRows.length > 0 && !hasActiveRun}
+      >
+        <ReportPanel
+          pairId={pairId}
+          environmentId={environmentId}
+          period={period}
+          isAdvanced={isAdvanced}
+        />
       </StepCard>
 
       <ConfirmDialog

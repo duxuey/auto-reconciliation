@@ -35,6 +35,10 @@ test.describe("对账工作台（业务模式）", () => {
     await expect(page.getByRole("button", { name: "重新读库" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "开始对账" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "执行进度与结果" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "对账报表" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "指标结果" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "差异账龄" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "导出报表 CSV" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "处理差异" })).toHaveCount(0);
     await expect(
       page.getByRole("heading", { name: "阶段确认与报表" })
@@ -48,7 +52,7 @@ test.describe("对账工作台（业务模式）", () => {
     await expect(page.getByRole("link", { name: "差异处理", exact: true })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "调整建议", exact: true })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "阶段确认", exact: true })).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "对账报表", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "对账报表", exact: true })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "自动对账", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "指标包" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "数据接入" })).toHaveCount(0);
@@ -73,9 +77,8 @@ test.describe("对账工作台（业务模式）", () => {
     await expect(page.getByText("每条记录对应金额是否一致").first()).toBeVisible();
   });
 
-  test("报表展示指标结果并支持导出", async ({ page }) => {
+  test("工作台报表展示指标结果并支持导出", async ({ page }) => {
     await selectPair(page, RP_PAIR_LABEL);
-    await page.getByRole("link", { name: "对账报表", exact: true }).click();
     await expect(page.getByRole("heading", { name: "对账报表" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "指标结果" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "差异账龄" })).toBeVisible();
@@ -125,7 +128,7 @@ test.describe("高级设置", () => {
     await page.goto("/");
     await page.getByRole("checkbox").check();
     await expect(page.getByRole("link", { name: "指标管理" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "数据接入" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "数据接入" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "环境配置" })).toBeVisible();
     await expect(
       page.getByRole("link", { name: "自动对账配置", exact: true })
@@ -198,15 +201,33 @@ test.describe("高级设置", () => {
     await expect(page.getByText("未填写")).toHaveCount(7);
   });
 
+  test("指标管理支持一键展开与折叠指标包", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("checkbox").check();
+    await page.getByRole("link", { name: "指标管理" }).click();
+
+    await page.getByRole("button", { name: "全部折叠" }).click();
+    await expect(page.getByRole("button", { name: "全部展开" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /^展开指标包 / }).first()
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "全部展开" }).click();
+    await expect(page.getByRole("button", { name: "全部折叠" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /^收起指标包 / }).first()
+    ).toBeVisible();
+  });
+
   test("环境配置可查看环境、系统 schema 与对账关系", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("checkbox").check();
     await page.getByRole("link", { name: "环境配置" }).click();
     await expect(page.getByRole("heading", { name: "环境与系统配置" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "新增环境", exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "环境", exact: true })).toBeVisible();
     await expect(page.getByRole("cell", { name: "TEST", exact: true })).toBeVisible();
     await expect(page.getByRole("cell", { name: "PROD", exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /环境系统 schema/ })).toBeVisible();
     await expect(page.getByRole("heading", { name: "对账关系", exact: true })).toBeVisible();
     await expect(
       page.getByRole("cell", { name: "非车承保↔非车理赔", exact: true })
@@ -226,46 +247,56 @@ test.describe("高级设置", () => {
       has: page.getByRole("cell", { name: "TEST", exact: true })
     });
     await envRow.getByRole("button", { name: "编辑" }).click();
-    const envDialog = page.getByRole("dialog");
+    let envDialog = page.getByRole("dialog");
     await expect(
       envDialog.getByRole("heading", { name: "编辑环境 TEST" })
     ).toBeVisible();
     await expect(envDialog.getByLabel("环境编码")).toBeDisabled();
     await expect(envDialog.getByLabel("主机")).not.toHaveValue("");
+    await expect(
+      envDialog.getByRole("heading", { name: "环境系统 schema" })
+    ).toBeVisible();
     await envDialog.getByRole("button", { name: "保存修改" }).click();
     await expect(envDialog).toBeHidden();
     await expect(page.getByText("环境配置已保存")).toBeVisible();
 
-    const schemaTable = page.locator("table").nth(1);
+    await envRow.getByRole("button", { name: "编辑" }).click();
+    envDialog = page.getByRole("dialog");
+    const schemaTable = envDialog.locator("table");
     await schemaTable.getByRole("button", { name: "编辑" }).first().click();
-    const schemaDialog = page.getByRole("dialog");
-    await expect(
-      schemaDialog.getByRole("heading", { name: /编辑系统 schema/ })
-    ).toBeVisible();
-    await expect(schemaDialog.getByLabel("schema 键").first()).not.toHaveValue("");
-    await schemaDialog.getByRole("button", { name: "保存" }).click();
-    await expect(schemaDialog).toBeHidden();
-    await expect(page.getByText("环境系统 schema 已保存")).toBeVisible();
+    await expect(envDialog.getByText(/编辑系统 schema/).first()).toBeVisible();
+    await expect(envDialog.getByLabel("schema 键").first()).not.toHaveValue("");
+    await envDialog.getByRole("button", { name: "保存 schema" }).click();
+    await expect(envDialog.getByText("系统 schema 已保存")).toBeVisible();
+    await envDialog.getByRole("button", { name: "取消" }).click();
+    await expect(envDialog).toBeHidden();
 
     const prodRow = page.getByRole("row").filter({
       has: page.getByRole("cell", { name: "PROD", exact: true })
     });
     await prodRow.getByRole("button", { name: "删除" }).click();
-    const deleteEnvDialog = page.getByRole("dialog");
-    await expect(
-      deleteEnvDialog.getByRole("heading", { name: "删除环境 PROD" })
-    ).toBeVisible();
+    const deleteEnvDialog = page
+      .getByRole("dialog")
+      .filter({ hasText: "删除环境 PROD" });
+    await expect(deleteEnvDialog).toBeVisible();
     await deleteEnvDialog.getByRole("button", { name: "取消" }).click();
     await expect(deleteEnvDialog).toBeHidden();
     await expect(page.getByRole("cell", { name: "PROD", exact: true })).toBeVisible();
 
-    await schemaTable.getByRole("button", { name: "删除" }).first().click();
-    const deleteSchemaDialog = page.getByRole("dialog");
-    await expect(
-      deleteSchemaDialog.getByRole("heading", { name: /删除系统 schema/ })
-    ).toBeVisible();
+    await envRow.getByRole("button", { name: "编辑" }).click();
+    const schemaEnvDialog = page.getByRole("dialog");
+    await schemaEnvDialog
+      .locator("table")
+      .getByRole("button", { name: "删除" })
+      .first()
+      .click();
+    const deleteSchemaDialog = page
+      .getByRole("dialog")
+      .filter({ hasText: "删除系统 schema" });
+    await expect(deleteSchemaDialog).toBeVisible();
     await deleteSchemaDialog.getByRole("button", { name: "取消" }).click();
     await expect(deleteSchemaDialog).toBeHidden();
+    await expect(schemaEnvDialog).toBeVisible();
   });
 
 });

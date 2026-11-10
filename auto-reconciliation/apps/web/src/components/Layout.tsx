@@ -4,10 +4,8 @@ import { cn } from "../lib/cn";
 import { useScope } from "../lib/scope";
 import {
   IconAutomation,
-  IconDatabase,
   IconOverview,
   IconPack,
-  IconReport,
   IconRuns,
   IconSettings,
   IconSliders,
@@ -23,16 +21,14 @@ interface NavItem {
 }
 
 const BUSINESS_NAV: NavItem[] = [
+  { to: "/automation", label: "自动对账", icon: IconAutomation },
   { to: "/", label: "对账工作台", end: true, icon: IconWorkbench },
-  { to: "/runs", label: "执行记录", icon: IconRuns },
-  { to: "/reports", label: "对账报表", icon: IconReport },
-  { to: "/automation", label: "自动对账", icon: IconAutomation }
+  { to: "/runs", label: "执行记录", icon: IconRuns }
 ];
 
 const ADVANCED_NAV: NavItem[] = [
   { to: "/overview", label: "运营总览", icon: IconOverview },
   { to: "/advanced/packs", label: "指标管理", icon: IconPack },
-  { to: "/advanced/datasets", label: "数据接入", icon: IconDatabase },
   { to: "/advanced/settings", label: "环境配置", icon: IconSettings },
   { to: "/advanced/automation", label: "自动对账配置", icon: IconSliders }
 ];
@@ -132,7 +128,7 @@ export function Layout() {
             <span>
               <span className="block text-xs font-medium text-slate-200">高级模式</span>
               <span className="mt-0.5 block text-xs leading-4 text-slate-400">
-                配置指标、数据接入、环境连接与自动对账
+                配置指标、环境连接与自动对账
               </span>
             </span>
           </label>

@@ -700,14 +700,21 @@ function MetricSqlDialog({
   );
 }
 
-function PackPanel({ pack }: { pack: Pack }) {
+function PackPanel({
+  pack,
+  expanded,
+  onToggle
+}: {
+  pack: Pack;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   const utils = trpc.useUtils();
   const toast = useToast();
   const versionsQuery = trpc.pack.versions.useQuery({ id: pack.id });
   const createVersion = trpc.pack.createVersion.useMutation();
   const publish = trpc.pack.publish.useMutation();
 
-  const [expanded, setExpanded] = useState(true);
   const [edited, setEdited] = useState<PackConfig | null>(null);
   const [addMetricIndex, setAddMetricIndex] = useState<number | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
@@ -831,7 +838,7 @@ function PackPanel({ pack }: { pack: Pack }) {
           type="button"
           aria-label={`${expanded ? "收起" : "展开"}指标包 ${pack.packName}`}
           aria-expanded={expanded}
-          onClick={() => setExpanded((state) => !state)}
+          onClick={onToggle}
           className="mt-0.5 rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
         >
           <svg
@@ -1132,6 +1139,7 @@ export function PacksPage() {
   const { pairs } = useScope();
   const packsQuery = trpc.pack.list.useQuery({});
   const [pairFilter, setPairFilter] = useState("");
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
 
   const pairOptions = useMemo(
     () => [
@@ -1167,19 +1175,45 @@ export function PacksPage() {
     return result;
   }, [pairs, visiblePacks]);
 
+  const allCollapsed =
+    visiblePacks.length > 0 && visiblePacks.every((pack) => collapsedIds.has(pack.id));
+
+  function togglePack(packId: string): void {
+    setCollapsedIds((current) => {
+      const next = new Set(current);
+      if (next.has(packId)) {
+        next.delete(packId);
+      } else {
+        next.add(packId);
+      }
+      return next;
+    });
+  }
+
+  function toggleAll(): void {
+    setCollapsedIds(
+      allCollapsed ? new Set() : new Set(visiblePacks.map((pack) => pack.id))
+    );
+  }
+
   return (
     <div>
       <PageHeader
         title="指标管理"
         description="按系统间对账关系查看指标包与指标明细；指标 SQL 口径仅作文档/审计说明，不参与执行。新增、移除指标或修改 SQL 口径会生成新版本，确认发布后生效。"
         actions={
-          <div className="w-64">
-            <SelectMenu
-              ariaLabel="对账关系筛选"
-              value={pairFilter}
-              options={pairOptions}
-              onChange={setPairFilter}
-            />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={toggleAll}>
+              {allCollapsed ? "全部展开" : "全部折叠"}
+            </Button>
+            <div className="w-64">
+              <SelectMenu
+                ariaLabel="对账关系筛选"
+                value={pairFilter}
+                options={pairOptions}
+                onChange={setPairFilter}
+              />
+            </div>
           </div>
         }
       />
@@ -1209,7 +1243,12 @@ export function PacksPage() {
                 </CardHeader>
                 <CardContent className="space-y-3 bg-slate-50/40">
                   {group.packs.map((pack) => (
-                    <PackPanel key={pack.id} pack={pack} />
+                    <PackPanel
+                      key={pack.id}
+                      pack={pack}
+                      expanded={!collapsedIds.has(pack.id)}
+                      onToggle={() => togglePack(pack.id)}
+                    />
                   ))}
                 </CardContent>
               </Card>
