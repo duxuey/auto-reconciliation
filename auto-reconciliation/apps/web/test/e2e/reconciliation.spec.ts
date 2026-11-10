@@ -67,9 +67,32 @@ test.describe("对账工作台（业务模式）", () => {
     await expect(
       page.getByRole("columnheader", { name: "执行时间" })
     ).toBeVisible();
+    await expect(page.getByLabel("对账关系").last()).toBeVisible();
+    await expect(page.getByLabel("指标包")).toBeVisible();
+    await expect(page.getByText("手动补跑单个指标包")).toHaveCount(0);
     await expect(
       page.getByRole("row").filter({ hasText: "再保送收付↔收付账单" }).first()
     ).toBeVisible();
+
+    await page.getByLabel("指标包").selectOption({ index: 1 });
+    await expect(page.getByText("共 1 条执行记录")).toBeVisible();
+    await expect(
+      page.getByRole("row").filter({ hasText: "再保送收付↔收付账单" }).first()
+    ).toBeVisible();
+
+    const pairFilter = page.getByLabel("对账关系").last();
+    const currentPair = await pairFilter.inputValue();
+    const otherPair = await pairFilter.evaluate((select, current) => {
+      return (
+        Array.from((select as HTMLSelectElement).options)
+          .map((option) => option.value)
+          .find((value) => value !== "" && value !== current) ?? ""
+      );
+    }, currentPair);
+    expect(otherPair).not.toBe("");
+    await pairFilter.selectOption(otherPair);
+    await expect(page.locator("header select").nth(1)).toHaveValue(otherPair);
+    await expect(page.getByLabel("指标包")).toHaveValue("");
   });
 
   test("执行结果展示指标汇总", async ({ page }) => {

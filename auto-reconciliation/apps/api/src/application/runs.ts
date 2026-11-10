@@ -840,6 +840,7 @@ export async function listRuns(
     limit?: number;
     environmentId?: string;
     pairId?: string;
+    packId?: string;
     periodStartDate?: string;
     periodEndDate?: string;
   } = {}
@@ -853,6 +854,9 @@ export async function listRuns(
   }
   if (options.pairId !== undefined && options.pairId !== "") {
     conditions.push(eq(checkRun.pairId, options.pairId));
+  }
+  if (options.packId !== undefined && options.packId !== "") {
+    conditions.push(eq(checkRun.packId, options.packId));
   }
   if (options.periodStartDate !== undefined && options.periodStartDate !== "") {
     conditions.push(gte(checkRun.periodStartDate, options.periodStartDate));

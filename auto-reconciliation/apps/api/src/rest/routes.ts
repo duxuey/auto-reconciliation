@@ -589,7 +589,8 @@ export function registerRoutes(app: Hono<AppEnv>): void {
         await listRuns({
           limit: query.limit,
           environmentId: query.environmentId,
-          pairId: query.pairId
+          pairId: query.pairId,
+          packId: query.packId
         })
       );
     }

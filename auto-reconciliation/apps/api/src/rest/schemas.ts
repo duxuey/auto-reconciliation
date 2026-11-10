@@ -110,6 +110,7 @@ export const runListSchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   environmentId: z.string().length(26).optional(),
   pairId: z.string().length(26).optional(),
+  packId: z.string().length(26).optional(),
   periodStartDate: businessDateSchema.optional(),
   periodEndDate: businessDateSchema.optional()
 });

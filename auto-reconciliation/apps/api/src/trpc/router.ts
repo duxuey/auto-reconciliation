@@ -228,6 +228,7 @@ const runRouter = t.router({
         limit: input?.limit ?? 50,
         environmentId: input?.environmentId,
         pairId: input?.pairId,
+        packId: input?.packId,
         periodStartDate: input?.periodStartDate,
         periodEndDate: input?.periodEndDate
       })
