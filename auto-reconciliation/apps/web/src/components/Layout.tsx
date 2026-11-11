@@ -34,6 +34,74 @@ const ADVANCED_NAV: NavItem[] = [
   { to: "/advanced/automation", label: "自动对账配置", icon: IconSliders }
 ];
 
+interface PageMeta {
+  path: string;
+  exact?: boolean;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  title: string;
+  subtitle: string;
+}
+
+/** 顶部标识与左侧菜单保持一致：切换菜单时同步图标与标题 */
+const PAGE_META: PageMeta[] = [
+  {
+    path: "/automation",
+    exact: true,
+    icon: IconAutomation,
+    title: "自动对账",
+    subtitle: "调度执行、手动对账与通知结果"
+  },
+  {
+    path: "/",
+    exact: true,
+    icon: IconWorkbench,
+    title: "对账工作台",
+    subtitle: "选择对账关系与期间，完成一轮对账"
+  },
+  {
+    path: "/runs",
+    icon: IconReconWorkbench,
+    title: "自动对账工作台",
+    subtitle: "对账执行记录与结果查询"
+  },
+  {
+    path: "/overview",
+    exact: true,
+    icon: IconOverview,
+    title: "运营总览",
+    subtitle: "指标包健康与差异风险"
+  },
+  {
+    path: "/advanced/packs",
+    exact: true,
+    icon: IconPack,
+    title: "指标管理",
+    subtitle: "对账关系下的指标包与指标口径"
+  },
+  {
+    path: "/advanced/settings",
+    exact: true,
+    icon: IconSettings,
+    title: "环境配置",
+    subtitle: "环境、系统 schema 与对账关系"
+  },
+  {
+    path: "/advanced/automation",
+    exact: true,
+    icon: IconSliders,
+    title: "自动对账配置",
+    subtitle: "调度、通知与执行范围配置"
+  }
+];
+
+function matchPageMeta(pathname: string): PageMeta | undefined {
+  return PAGE_META.find((item) =>
+    item.exact === true
+      ? pathname === item.path
+      : pathname === item.path || pathname.startsWith(`${item.path}/`)
+  );
+}
+
 function NavItems({ items }: { items: NavItem[] }) {
   return (
     <>
@@ -75,7 +143,12 @@ function NavItems({ items }: { items: NavItem[] }) {
 
 export function Layout() {
   const location = useLocation();
-  const isRunsPage = location.pathname === "/runs";
+  const isRunsArea =
+    location.pathname === "/runs" || location.pathname.startsWith("/runs/");
+  const pageMeta = matchPageMeta(location.pathname);
+  const HeaderIcon = pageMeta?.icon ?? IconReconWorkbench;
+  const headerTitle = pageMeta?.title ?? "业再财自动对账";
+  const headerSubtitle = pageMeta?.subtitle ?? "合约账 / 临分账自动对账";
   const {
     environments,
     environmentId,
@@ -83,8 +156,6 @@ export function Layout() {
     pairs,
     pairId,
     setPairId,
-    pair,
-    businessEnvironment,
     isAdvanced,
     setUiMode
   } = useScope();
@@ -139,34 +210,20 @@ export function Layout() {
       </aside>
       <main className="min-w-0 flex-1">
         <header className="flex h-16 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/90 px-6 shadow-card backdrop-blur">
-          {isRunsPage ? (
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25 ring-1 ring-inset ring-white/20">
-                <IconReconWorkbench className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="truncate text-base font-semibold tracking-tight text-slate-900">
-                  自动对账工作台
-                </div>
-                <div className="truncate text-xs text-slate-500">
-                  对账执行记录与结果查询
-                </div>
-              </div>
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25 ring-1 ring-inset ring-white/20">
+              <HeaderIcon className="h-5 w-5" />
             </div>
-          ) : (
             <div className="min-w-0">
-              <div className="flex items-center gap-2 truncate text-sm font-semibold text-slate-800">
-                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                合约账 / 临分账自动对账
+              <div className="truncate text-base font-semibold tracking-tight text-slate-900">
+                {headerTitle}
               </div>
-              <div className="mt-0.5 truncate text-xs text-slate-500">
-                {isAdvanced
-                  ? `${environments.find((item) => item.id === environmentId)?.envName ?? "未选择环境"} · ${pair?.pairName ?? "未选择对账关系"}`
-                  : `${businessEnvironment?.envName ?? "未设置默认环境"} · ${pair?.pairName ?? "请在对账工作台选择对账关系"}`}
+              <div className="truncate text-xs text-slate-500">
+                {headerSubtitle}
               </div>
             </div>
-          )}
-          {isRunsPage ? (
+          </div>
+          {isRunsArea ? (
             isAdvanced ? null : (
               <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-100">
                 业务模式

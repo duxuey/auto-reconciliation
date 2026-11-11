@@ -20,7 +20,9 @@ test.describe("对账工作台（业务模式）", () => {
   test("按步骤展示对账关系、期间与数据就绪检查", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "对账工作台" })).toBeVisible();
-    await expect(page.getByText("选择对账关系与期间")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "选择对账关系与期间" })
+    ).toBeVisible();
     await page.getByRole("button", { name: "对账关系" }).click();
     await expect(
       page.getByRole("option", { name: RP_PAIR_LABEL })
@@ -122,6 +124,10 @@ test.describe("对账工作台（业务模式）", () => {
     await page.getByRole("link", { name: "自动对账", exact: true }).click();
     await expect(page).toHaveURL(/\/automation$/);
     await expect(page.getByRole("heading", { name: "自动对账" })).toBeVisible();
+    await expect(
+      page.getByText("调度执行、手动对账与通知结果", { exact: true })
+    ).toBeVisible();
+    await expect(page.getByText("合约账 / 临分账自动对账")).toHaveCount(0);
 
     await expect(page.getByText("已配置指标", { exact: true })).toBeVisible();
     await expect(page.getByText("最近执行指标", { exact: true })).toBeVisible();
@@ -181,6 +187,10 @@ test.describe("高级设置", () => {
     await page.getByRole("link", { name: "运营总览" }).click();
     await expect(page).toHaveURL(/\/overview$/);
     await expect(page.getByRole("heading", { name: "对账总览" })).toBeVisible();
+    await expect(
+      page.getByText("指标包健康与差异风险", { exact: true })
+    ).toBeVisible();
+    await expect(page.getByText("合约账 / 临分账自动对账")).toHaveCount(0);
     await expect(page.getByText("超期差异", { exact: true })).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "指标包健康状态" })
